@@ -1606,5 +1606,84 @@ $('#burger').onclick=function(){$('#side').classList.add('aberto');$('#scrim').c
 render();
 })();
 </script>
+<script>
+/* Login com a conta FGR (Microsoft/Entra) pelo Auth do Hydra (dados.hydra.fgr.com.br).
+   Só liga no endereço *.hydra.fgr.com.br; em qualquer outro lugar (arquivo local, demonstração) o painel abre direto.
+   A chave "anon" é pública por definição (não é a service_role). */
+(function(){
+var DADOS='https://dados.hydra.fgr.com.br',ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkwNTMxMTMyLCJleHAiOjIxMDU4OTExMzJ9.qKTpmcEWW1lafrW0gXu3NDywbZenczkfgJrROhoM-1A',CHAVE='fgr_cjg_auth';
+var ATIVO=/\.hydra\.fgr\.com\.br$/i.test(location.hostname)||window.FGR_AUTH_TESTE===true;
+if(!ATIVO)return;
+var PERMITIDO=/@fgr\.com(\.br)?$/i,mem=null,gate=null;
+function ler(){try{var v=localStorage.getItem(CHAVE);return v?JSON.parse(v):mem}catch(e){return mem}}
+function gravar(s){mem=s;try{if(s)localStorage.setItem(CHAVE,JSON.stringify(s));else localStorage.removeItem(CHAVE)}catch(e){}}
+function esc(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function bonito(n){n=String(n||'').trim();if(n&&n===n.toUpperCase())n=n.toLowerCase().replace(/(^|\s)(\S)/g,function(m,a,b){return a+b.toUpperCase()});return n}
+function urlEntrar(){return DADOS+'/auth/v1/authorize?provider=azure&scopes=email&redirect_to='+encodeURIComponent(location.origin+'/')}
+window.__fgrAuthUrl=urlEntrar;
+function mostrar(msg){
+  if(!gate){
+    gate=document.createElement('div');gate.id='auth-gate';
+    gate.setAttribute('style','position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:20px;background:var(--p-bg);color:var(--ink);font-family:var(--sans)');
+    document.body.appendChild(gate);
+  }
+  var espera=(msg==='Entrando…');
+  gate.innerHTML='<div style="max-width:400px;width:100%;background:var(--p-surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--p-shadow);padding:28px 26px;display:flex;flex-direction:column;gap:14px;text-align:center">'
+   +'<div style="width:46px;height:46px;border-radius:12px;background:var(--p-accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;margin:0 auto">FGR</div>'
+   +'<div style="font-size:19px;font-weight:600">Controle Jardins Grécia</div>'
+   +'<div class="m" style="font-size:13.5px">Entre com a sua conta FGR (Microsoft).</div>'
+   +(msg?'<div id="auth-msg" role="status" style="font-size:13px;color:'+(espera?'var(--muted)':'var(--bad)')+'">'+esc(msg)+'</div>':'')
+   +(espera?'':'<button class="b" id="auth-entrar" style="align-self:center">Entrar com conta Microsoft</button>')
+   +'</div>';
+  var b=gate.querySelector('#auth-entrar');if(b)b.onclick=function(){location.href=urlEntrar()};
+}
+function esconder(){if(gate){gate.remove();gate=null}}
+function nomeCampo(nome){var f=document.getElementById('f-nome');if(f&&!f.value.trim()&&nome){f.value=bonito(nome);f.dispatchEvent(new Event('input',{bubbles:true}))}}
+function linhaUsuario(s){
+  var foot=document.querySelector('.side-foot');if(!foot)return;
+  var el=document.getElementById('auth-user');
+  if(!el){el=document.createElement('div');el.id='auth-user';el.className='nota';foot.insertBefore(el,foot.querySelector('.nota'))}
+  el.innerHTML='Entrou como <b>'+esc(bonito(s.name)||s.email)+'</b> · <a href="#" id="auth-sair" style="color:var(--side-accent)">Sair</a>';
+  var a=document.getElementById('auth-sair');
+  a.onclick=function(ev){ev.preventDefault();
+    var t=(ler()||{}).access_token;
+    if(t)fetch(DADOS+'/auth/v1/logout',{method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+t}}).catch(function(){});
+    gravar(null);el.remove();mostrar('Você saiu. Entre de novo para continuar.');
+  };
+}
+function entrou(s){
+  if(!PERMITIDO.test(s.email||'')){gravar(null);mostrar('A conta '+(s.email||'')+' não é uma conta FGR. Entre com o seu e-mail @fgr.com.br.');return}
+  esconder();linhaUsuario(s);nomeCampo(s.name);
+}
+function usuario(tok){
+  return fetch(DADOS+'/auth/v1/user',{headers:{apikey:ANON,Authorization:'Bearer '+tok}}).then(function(r){if(!r.ok)throw new Error('sessao');return r.json()});
+}
+function renovar(s){
+  return fetch(DADOS+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:ANON,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:s.refresh_token})})
+    .then(function(r){if(!r.ok)throw new Error('renovar');return r.json()})
+    .then(function(j){var n={access_token:j.access_token,refresh_token:j.refresh_token||s.refresh_token,expires_at:Date.now()+(j.expires_in||3600)*1000,email:s.email,name:s.name};gravar(n);return n});
+}
+function iniciar(){
+  var h=(location.hash||'').replace(/^#/,''),q=(location.search||'').replace(/^\?/,''),p=new URLSearchParams(h+'&'+q);
+  var limpo=function(){history.replaceState(null,'',location.pathname)};
+  if(p.get('error_description')||p.get('error')){limpo();mostrar('Não foi possível entrar: '+(p.get('error_description')||p.get('error')));return}
+  if(p.get('access_token')){
+    var tok=p.get('access_token'),ref=p.get('refresh_token'),exp=Number(p.get('expires_in'))||3600;
+    limpo();mostrar('Entrando…');
+    usuario(tok).then(function(u){
+      var m=u.user_metadata||{};
+      var s={access_token:tok,refresh_token:ref,expires_at:Date.now()+exp*1000,email:u.email,name:m.full_name||m.name||u.email};
+      gravar(s);entrou(s);
+    }).catch(function(){gravar(null);mostrar('Não consegui confirmar o seu login. Tente entrar de novo.')});
+    return;
+  }
+  var s=ler();
+  if(s&&s.expires_at>Date.now()+60000){entrou(s);return}
+  if(s&&s.refresh_token){mostrar('Entrando…');renovar(s).then(entrou).catch(function(){gravar(null);mostrar('')});return}
+  mostrar('');
+}
+iniciar();
+})();
+</script>
 </body>
 </html>
