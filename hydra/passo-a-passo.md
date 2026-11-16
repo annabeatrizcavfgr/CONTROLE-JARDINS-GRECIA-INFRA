@@ -13,7 +13,7 @@ nginx.conf          ← /healthz e "sempre conferir versão nova"
 
 ## 1. Colocar no GitHub
 
-1. Abra o **GitHub Desktop** → **File → Add local repository** → escolha a pasta `CONTROLE-JARDINS-GRECIA`. (Já está com o primeiro commit feito, na branch `main`.)
+1. Abra o **GitHub Desktop** → **File → Add local repository** → escolha a pasta `CONTROLE-JARDINS-GRECIA`. (Já está com o primeiro commit feito, na branch `hydra`.)
 2. **Publish repository** → nome sugerido: `controle-jardins-grecia`.
 3. Se for usar **Public Repository** no Coolify (como no app de metas), **desmarque** "Keep this code private". O código ficará visível para qualquer pessoa, mas não tem nenhum dado real: o app abre vazio e os dados ficam no navegador de quem usa.
 
@@ -24,7 +24,7 @@ Precisa estar no escritório da FGR ou na VPN.
 1. `https://hydra.fgr.com.br` → login Microsoft → escolha o **Team do seu departamento** (o mesmo do app de metas, se for o do seu departamento).
 2. **Projects → +** → nome `controle-obras` (sugestão) → ambiente **production**.
 3. **+ New Resource → Application → Public Repository** (ou o GitHub App do Team, se preferir deixar o repositório privado).
-4. Repository URL: `https://github.com/annabeatrizcavfgr/controle-jardins-grecia` · Branch: **`main`**.
+4. Repository URL: `https://github.com/annabeatrizcavfgr/controle-jardins-grecia` · Branch: **`hydra`**.
 5. Server (rodar): **FGRLNX07** · Build server: **FGRLNX09**. Não troque.
 6. **Build Pack: Dockerfile** (não Nixpacks).
 7. **Ports Exposes: `80`** (não use 3000).
