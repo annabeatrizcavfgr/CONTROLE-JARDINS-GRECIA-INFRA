@@ -507,6 +507,9 @@ button.b.bad{background:var(--bad);border-color:var(--bad);color:var(--surface)}
 .grade-tab select{display:block;width:100%;height:34px;border:0;border-radius:0;outline:0;box-shadow:none;background:transparent;padding:0 6px;font:13px var(--sans);color:var(--ink);cursor:pointer}
 .grade-tab select:focus{outline:2px solid var(--accent);outline-offset:-2px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
 .grade-tab select.bad{background:color-mix(in srgb,var(--bad) 12%,var(--surface));color:var(--bad)}
+.etapa-top{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.etapa-top select{font:600 13px var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;max-width:300px}
+.etapa-top select:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
 .tema-btn{display:inline-grid;place-items:center;width:34px;height:34px;padding:0;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
 .tema-btn:hover{background:var(--line-2);color:var(--ink)}
 .tema-btn svg{width:18px;height:18px}
@@ -1247,7 +1250,7 @@ var CFG={
   campos:[['n','Nome do aditivo *','text',null,'Ex.: Reforço de quadro elétrico',1],['idfm','ID no FlowMaster','text',null,'Ex.: 173'],['origem','Aberto por','select',['Obra','Orçamento']],['obra','Obra','obra'],['sol','Solicitante','text','PESSOAS','Ex.: Viktor'],['motivo','Motivo','select',MOTIVOS_FLOW],['desvio','Está em','select',['Fluxo padrão','Projetos','Suprimentos']],['etapa','Etapa atual','etapa',ETAPAS_FLOW],['criada','Data de criação','date']],
   vazio:function(){return {n:'',idfm:'',origem:'Obra',obra:obraPad(),sol:'',motivo:'Não informado',desvio:'Fluxo padrão',etapa:0,criada:hojeISO()}},obrig:['n'],prefixo:'f'},
  projetos:{lista:function(){return PRJ},itens:tPrj,rotulo:['projeto','projetos'],novo:'Novo projeto',grade:true,busca:'Buscar por projeto, código, tipologia ou responsável pela validação',
-  seg:[['projetos','Com a equipe de projetos'],['obra','Com a obra (validar)'],['concluidos','Executivo disponibilizado'],['todas','Todos']],
+  seg:[['todas','Todos']],etapaTopo:true,
   extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button>'},
   filtros:function(){return [['status','Etapa',opts2(['Pendente com a equipe de projetos'].concat(ETAPAS_PRJ))],['val','Responsável validação',opts2(uniq(PRJ.map(function(p){return p.val})))],['tip','Tipologia / área',opts2(uniq(PRJ.map(function(p){return p.tip})))]]},
   nota:'Pendente com a equipe de projetos: ainda sem projeto, ou aguardando retorno da validação ou o executivo. Pendente com a obra: projeto disponibilizado esperando validação. Os números em itálico são as datas previstas pelos prazos padrão.',
@@ -1339,11 +1342,18 @@ function formHtml(k){
    +'<div class="acoes"><button class="b" data-act="salvar">Salvar</button><button class="b sec" data-act="cancelar">Cancelar</button><span class="sp"></span>'
    +(f.id?(u.del===f.id?'<button class="b bad" data-act="excluir-ok" data-v="'+f.id+'">Confirmar exclusão</button><button class="b sec" data-act="excluir-no">Não excluir</button>':'<button class="b sec" data-act="excluir" data-v="'+f.id+'">Excluir</button>'):'')+'</div></div>';
 }
+/* filtro de etapa sempre visível no topo (usa o mesmo filtro "Etapa" do painel Filtros), com a quantidade de cada etapa */
+function etapaTopoHtml(k,u){
+  var def=CFG[k].filtros().filter(function(f){return f[0]==='status'})[0];if(!def)return '';
+  var c={},tot=0;CFG[k].itens().forEach(function(x){var s=x.f.status;c[s]=(c[s]||0)+1;tot++});
+  return '<label class="etapa-top"><span>Etapa</span><select data-f="status" aria-label="Filtrar por etapa"><option value="">Todas as etapas ('+tot+')</option>'
+    +def[2].map(function(o){return '<option value="'+restricaoEsc(o[0])+'"'+(u.f.status===o[0]?' selected':'')+'>'+restricaoEsc(o[1])+' ('+(c[o[0]]||0)+')</option>'}).join('')+'</select></label>';
+}
 function barraHtml(k){
   var cfg=CFG[k],u=UI[k],r=filtrar(k),fl=cfg.filtros();
   var ativos=fl.filter(function(f){return u.f[f[0]]!==undefined&&u.f[f[0]]!==''});
   function nomeOpt(f,v){var o=f[2].filter(function(x){return x[0]===v})[0];return o?o[1]:v}
-  return '<div class="card fbar"><div class="fbar-r"><div class="seg" role="group" aria-label="Situação">'+cfg.seg.map(function(s){return '<button class="'+(u.seg===s[0]?'on':'')+'" data-act="seg" data-v="'+s[0]+'">'+s[1]+' <span style="opacity:.7">'+r.cont[s[0]]+'</span></button>'}).join('')+'</div>'
+  return '<div class="card fbar"><div class="fbar-r">'+(cfg.seg.length>1?'<div class="seg" role="group" aria-label="Situação">'+cfg.seg.map(function(s){return '<button class="'+(u.seg===s[0]?'on':'')+'" data-act="seg" data-v="'+s[0]+'">'+s[1]+' <span style="opacity:.7">'+r.cont[s[0]]+'</span></button>'}).join('')+'</div>':'')+(cfg.etapaTopo?etapaTopoHtml(k,u):'')
    +'<div class="busca">'+ic('search',16)+'<input id="f-busca" value="'+restricaoEsc(u.busca)+'" placeholder="'+cfg.busca+'" autocomplete="off" aria-label="Buscar"></div>'
    +'<button class="b sec sm" data-act="filtros" aria-expanded="'+u.aberto+'">'+ic('filter',15)+' Filtros'+(ativos.length?' <span class="bd2">'+ativos.length+'</span>':'')+'</button>'
    +(cfg.extraBtn?cfg.extraBtn(u):'')
