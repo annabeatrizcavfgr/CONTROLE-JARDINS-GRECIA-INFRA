@@ -116,5 +116,16 @@ Todo mundo que entra no painel passa a ver e editar os mesmos pedidos, flows, co
 - **Banco fora do ar na abertura:** o painel abre em **modo local**, com aviso e botão "Tentar de novo". Nesse modo o que você muda fica só no seu navegador.
 - **Excluir** marca a linha como apagada (`deleted = true`) para os outros navegadores ficarem sabendo.
 
+### Se aparecer "Não foi possível abrir os dados compartilhados"
+O aviso amarelo traz um **detalhe** com o motivo:
+
+| Detalhe | O que significa | O que fazer |
+| --- | --- | --- |
+| `HTTP 404` ou `HTTP 406` | O schema ainda não existe ou ainda não foi liberado na API | Rodar o `01-schema.sql` no Studio e esperar uns 5 minutos (até 15) |
+| `HTTP 401` | O banco não aceitou o login | Sair e entrar de novo; se persistir, falar com o TI |
+| `HTTP 403` | Faltam permissões (a liberação automática ainda não rodou, ou o e-mail não é `@fgr.com.br`/`@fgr.com`) | Esperar uns minutos; conferir o e-mail da conta |
+| `sem resposta do servidor` | O painel não alcançou `dados.hydra.fgr.com.br` | Conferir a rede/VPN da FGR |
+
+Depois de resolver, clique em **Tentar de novo** (ou recarregue a página).
 ### Segurança, em uma frase
 A tabela só aceita contas com e-mail `@fgr.com.br`/`@fgr.com` (regras no `01-schema.sql`). Qualquer pessoa da FGR que consiga entrar no Hydra conseguiria, tecnicamente, ler e gravar nessa tabela pela API, mesmo sem usar o painel. Se um dia for preciso restringir por obra ou por papel (como no app de metas, com planejador/coordenador/visualizador), o caminho é colocar um servidor no meio, o mesmo desenho do app de metas.

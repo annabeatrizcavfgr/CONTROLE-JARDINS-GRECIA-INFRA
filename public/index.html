@@ -1523,7 +1523,7 @@ function avisoRender(){
   el.style.display='';
   if(st==='carregando'){el.innerHTML='Carregando os dados compartilhados…';return}
   if(st==='erro'&&SYNC.ativo){el.innerHTML='Sem conexão com os dados compartilhados. As alterações ficam guardadas e são enviadas quando a conexão voltar.';return}
-  if(st==='erro'){el.innerHTML='Não foi possível abrir os dados compartilhados. O painel está em modo local: o que você mudar fica só neste navegador. <button class="ex-link" id="aviso-recarregar">Tentar de novo</button>';var b=$('#aviso-recarregar');if(b)b.onclick=function(){location.reload()};return}
+  if(st==='erro'){el.innerHTML='Não foi possível abrir os dados compartilhados. O painel está em modo local: o que você mudar fica só neste navegador.'+(SYNC.detalhe?' <span class="m">(detalhe: '+SYNC.detalhe+')</span>':'')+' <button class="ex-link" id="aviso-recarregar">Tentar de novo</button>';var b=$('#aviso-recarregar');if(b)b.onclick=function(){location.reload()};return}
   el.innerHTML=EXEMPLO?'Os dados abaixo são de exemplo. Tudo que você incluir fica salvo só neste navegador (não é compartilhado). '+(CONF_LIMPAR?'<button class="ex-link" data-ex="ok"><b>Confirmar: apagar os exemplos</b></button> <button class="ex-link" data-ex="no">Cancelar</button>':'<button class="ex-link" data-ex="limpar">Limpar exemplos</button>')
     :'Os dados ficam salvos só neste navegador (não são compartilhados com outras pessoas ou aparelhos).';
 }document.addEventListener('click',function(e){
@@ -1891,8 +1891,9 @@ window.fgrSyncStart=function(){
     avisoRender();render();syncAgenda();
     SYNC.poll=setInterval(syncPuxa,window.FGR_POLL_MS||8000);
     document.addEventListener('visibilitychange',function(){if(!document.hidden)syncPuxa()});
-  }).catch(function(){
-    SYNC.ativo=false;SYNC.estado='erro';
+  }).catch(function(e){
+    SYNC.ativo=false;SYNC.estado='erro';SYNC.detalhe=(e&&e.status)?('HTTP '+e.status):'sem resposta do servidor';
+    try{console.warn('Dados compartilhados:',e)}catch(_){}
     if(principal)principal.style.visibility='';
     avisoRender();
   });
