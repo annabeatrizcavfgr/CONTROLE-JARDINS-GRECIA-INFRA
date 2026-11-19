@@ -504,8 +504,9 @@ button.b.bad{background:var(--bad);border-color:var(--bad);color:var(--surface)}
 .grade-tab input:focus{outline:2px solid var(--accent);outline-offset:-2px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
 .grade-tab input.bad{background:color-mix(in srgb,var(--bad) 12%,var(--surface));color:var(--bad)}
 .grade-tab input::placeholder{color:var(--muted);opacity:.6}
-.grade-tab th:nth-child(2){width:34%}
-.grade-tab th:nth-child(3){width:11%}.grade-tab th:nth-child(5){width:8%}.grade-tab th:nth-child(7){width:13%}
+.grade-tab select{display:block;width:100%;height:34px;border:0;border-radius:0;outline:0;box-shadow:none;background:transparent;padding:0 6px;font:13px var(--sans);color:var(--ink);cursor:pointer}
+.grade-tab select:focus{outline:2px solid var(--accent);outline-offset:-2px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.grade-tab select.bad{background:color-mix(in srgb,var(--bad) 12%,var(--surface));color:var(--bad)}
 .tema-btn{display:inline-grid;place-items:center;width:34px;height:34px;padding:0;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
 .tema-btn:hover{background:var(--line-2);color:var(--ink)}
 .tema-btn svg{width:18px;height:18px}
@@ -1238,7 +1239,7 @@ var CFG={
   nota:'Clique no círculo da trilha para marcar a etapa em que o pedido está. Depois de OC enviada para o fornecedor, a solicitação vai para "No fornecedor".',
   campos:[['serv','Serviço','text','PACOTES','Ex.: BANCADAS'],['obra','Obra','obra'],['d','Nome da solicitação *','text',null,'Ex.: Bancadas das casas 19-01 a 19-38',1],['eng','Engenheiro *','text','PESSOAS','Ex.: Viktor'],['tipo','Tipo','select',TIPOS],['resp','Quem está fazendo o pedido (pode ficar em branco)','text','PESSOAS','Em branco: quem for fazer assume depois'],['ped','Nº do pedido no UAU','text',null,''],['cot','Nº da cotação','text',null,''],['oc','Nº da OC','text',null,''],['etapa','Etapa atual','etapa',ETAPAS_PED],['criada','Data da solicitação','date'],['obs','Observação','area',null,'Ex.: PEDIDO REFERENTE ÀS BANCADAS DAS CASAS 19-01 A 19-38 - ENG VIKTOR',1]],
   vazio:function(){return {n:'',serv:'',obra:obraPad(),d:'',eng:'',tipo:'REGULAR',resp:'',ped:'',cot:'',oc:'',obs:'',etapa:0,criada:hojeISO()}},obrig:['d','eng'],prefixo:'p'},
- flows:{lista:function(){return FLO},itens:tFlo,rotulo:['aditivo','aditivos'],novo:'Novo aditivo',busca:'Buscar por nome do aditivo, ID, obra, solicitante ou motivo',
+ flows:{lista:function(){return FLO},itens:tFlo,rotulo:['aditivo','aditivos'],novo:'Novo aditivo',grade:true,busca:'Buscar por nome do aditivo, ID, obra, solicitante ou motivo',
   extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button>'},
   seg:[['andamento','Em andamento'],['atraso','Para cobrar'],['concluidos','Concluídos'],['todas','Todos']],
   filtros:function(){return [['onde','Onde está',opts2(['Obra','Orçamento','Planejamento','Projetos','Suprimentos','Concluído'])],['origem','Aberto por',opts2(['Obra','Orçamento'])],['obra','Obra',opts2(uniq(FLO.map(function(f){return f.obra})))],['motivo','Motivo',opts2(uniq(FLO.map(function(f){return f.motivo})))],['sol','Solicitante',opts2(uniq(FLO.map(function(f){return f.sol})))]]},
@@ -1252,7 +1253,7 @@ var CFG={
   nota:'Pendente com a equipe de projetos: ainda sem projeto, ou aguardando retorno da validação ou o executivo. Pendente com a obra: projeto disponibilizado esperando validação. Os números em itálico são as datas previstas pelos prazos padrão.',
   campos:[['proj','Projeto / disciplina *','text',null,'Ex.: Hidráulica: ramais e prumadas',1],['n','Código','text',null,'Ex.: HID-03'],['tip','Tipologia / área','text',null,'Ex.: SB-4Q3S'],['rev','Revisão','text',null,'Ex.: R01'],['val','Responsável pela validação','text','PESSOAS','Ex.: Viktor'],['prometida','Previsão de entrega (data que projetos prometeu para a próxima entrega)','date'],['etapa','Etapa atual','etapaN',ETAPAS_PRJ,'Pendente com a equipe de projetos'],['criada','Data da solicitação','date'],['obs','Observação','area',null,'',1]],
   vazio:function(){return {proj:'',n:'',tip:'',rev:'',resp:'',val:'',prometida:'',obs:'',etapa:-1,criada:hojeISO()}},obrig:['proj'],prefixo:'j'},
- licglpi:{lista:function(){return LIC},itens:tLic,rotulo:['solicitação','solicitações'],novo:'Nova solicitação',busca:'Buscar por pacote, nº do GLPI, pedido de serviço ou solicitante',
+ licglpi:{lista:function(){return LIC},itens:tLic,rotulo:['solicitação','solicitações'],novo:'Nova solicitação',grade:true,busca:'Buscar por pacote, nº do GLPI, pedido de serviço ou solicitante',
   extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button>'},
   seg:[['andamento','Em andamento'],['concluidas','Contrato aprovado'],['todas','Todas']],
   filtros:function(){return [['tipo','Tipo',opts2(TIPOS_CONTR)],['emerg','Urgência',opts2(['Emergencial','Normal'])],['serv','Pacote',opts2(uniq(LIC.map(function(l){return l.serv})))],['sol','Solicitante',opts2(uniq(LIC.map(function(l){return l.sol})))],['status','Etapa',opts2(['GLPI ainda não aberto'].concat(ETAPAS_LIC))],['obra','Obra',opts2(uniq(LIC.map(function(l){return l.obra})))]]},
@@ -1346,7 +1347,7 @@ function barraHtml(k){
    +'<div class="busca">'+ic('search',16)+'<input id="f-busca" value="'+restricaoEsc(u.busca)+'" placeholder="'+cfg.busca+'" autocomplete="off" aria-label="Buscar"></div>'
    +'<button class="b sec sm" data-act="filtros" aria-expanded="'+u.aberto+'">'+ic('filter',15)+' Filtros'+(ativos.length?' <span class="bd2">'+ativos.length+'</span>':'')+'</button>'
    +(cfg.extraBtn?cfg.extraBtn(u):'')
-   +(cfg.novos?cfg.novos.map(function(n){return '<button class="b sm" data-act="novo" data-v="'+n[0]+'">+ '+n[1]+'</button>'}).join(''):(cfg.grade?'<button class="b sm" data-act="grade">+ Adicionar projetos</button>':'<button class="b sm" data-act="novo">+ '+cfg.novo+'</button>'))+'</div>'
+   +(cfg.novos?cfg.novos.map(function(n){return '<button class="b sm" data-act="novo" data-v="'+n[0]+'">+ '+n[1]+'</button>'}).join(''):(cfg.grade?'<button class="b sm" data-act="grade">+ '+GRADES[k].botao+'</button>':'<button class="b sm" data-act="novo">+ '+cfg.novo+'</button>'))+'</div>'
    +(u.aberto?'<div class="filtros mini">'+fl.map(function(f){return '<div class="campo"><label for="ff-'+f[0]+'">'+f[1]+'</label><select id="ff-'+f[0]+'" data-f="'+f[0]+'"><option value="">Todos</option>'+f[2].map(function(o){return '<option value="'+restricaoEsc(o[0])+'"'+(u.f[f[0]]===o[0]?' selected':'')+'>'+restricaoEsc(o[1])+'</option>'}).join('')+'</select></div>'}).join('')+'</div>':'')
    +(ativos.length?'<div class="fchips">'+ativos.map(function(f){return '<span class="chip acc">'+f[1]+': '+restricaoEsc(nomeOpt(f,u.f[f[0]]))+' <button class="ic" style="padding:0 0 0 2px" data-act="rm" data-v="'+f[0]+'" aria-label="Remover filtro '+f[1]+'">✕</button></span>'}).join('')+'<button class="ex-link" data-act="limpar" style="font-size:12px">Limpar tudo</button></div>':'')+'</div>';
 }
@@ -1377,79 +1378,117 @@ function renderOutras(){
   shell();
   if(mesma){[].forEach.call(document.querySelectorAll('.tab.tbl'),function(t,i){if(sc[i]){t.scrollLeft=sc[i][0];t.scrollTop=sc[i][1]}});window.scrollTo(wx,wy)}
   ULT_TELA=k;
-}/* ---------- projetos: adicionar em grade, como planilha ---------- */
-var GRADE=[];
-var GRADE_COLS=[['proj','Projeto / disciplina *'],['n','Código'],['tip','Tipologia / área'],['rev','Revisão'],['val','Responsável pela validação'],['prometida','Previsão de entrega']];
-function gradeVazia(n){var a=[];for(var i=0;i<n;i++)a.push({proj:'',n:'',tip:'',rev:'',val:'',prometida:''});return a}
-function gradeValida(iso){var d=new Date(iso+'T12:00:00');return (!isNaN(d)&&d.toISOString().slice(0,10)===iso)?iso:null}
+}/* ---------- adicionar em grade, como planilha (projetos, flows e contratações/aditivos) ----------
+   Cada tela tem a sua lista de colunas. Tipos: texto, data (dd/mm/aaaa) e lista (menu de opções, como validação de dados do Excel). */
+var GRADE_ST={};
+var GRADES={
+  projetos:{botao:'Adicionar projetos',titulo:'Adicionar projetos',rot:'projeto(s)',dica:'Só o <b>Projeto</b> é obrigatório',
+    cols:[{k:'proj',l:'Projeto / disciplina *',w:'30%'},{k:'n',l:'Código',w:'10%'},{k:'tip',l:'Tipologia / área',w:'14%'},{k:'rev',l:'Revisão',w:'8%'},{k:'val',l:'Responsável pela validação',w:'20%',lista:'dl-pessoas'},{k:'prometida',l:'Previsão de entrega',w:'13%',t:'data'}],
+    faltam:function(r){var e={};if(!String(r.proj).trim())e.proj=1;return e},
+    cria:function(r,h){return {id:novoId('j'),proj:String(r.proj).trim(),n:String(r.n).trim(),tip:String(r.tip).trim(),rev:String(r.rev).trim(),resp:'',val:String(r.val).trim(),prometida:gradeData(r.prometida)||'',obs:'',criada:h,etapa:-1,hist:{},v:2,fmt:2}}},
+  flows:{botao:'Adicionar aditivos',titulo:'Adicionar aditivos (flows)',rot:'aditivo(s)',dica:'Só o <b>Aditivo</b> é obrigatório',
+    cols:[{k:'n',l:'Aditivo *',w:'26%'},{k:'idfm',l:'ID no FlowMaster',w:'9%'},{k:'origem',l:'Aberto por',w:'10%',t:'sel',op:['Obra','Orçamento'],def:'Obra'},{k:'obra',l:'Obra',w:'11%',t:'sel',op:function(){return ['']['concat'](CAD.obras)},vr:'(sem obra)'},{k:'sol',l:'Solicitante',w:'13%',lista:'dl-pessoas'},{k:'motivo',l:'Motivo',w:'18%',t:'sel',op:function(){return MOTIVOS_FLOW},def:'Não informado'},{k:'desvio',l:'Está em',w:'13%',t:'sel',op:['Fluxo padrão','Projetos','Suprimentos'],def:'Fluxo padrão'}],
+    faltam:function(r){var e={};if(!String(r.n).trim())e.n=1;return e},
+    cria:function(r,h){return {id:novoId('f'),n:String(r.n).trim(),idfm:String(r.idfm).trim(),origem:r.origem||'Obra',obra:r.obra||'',sol:String(r.sol).trim(),motivo:r.motivo||'Não informado',desvio:r.desvio||'Fluxo padrão',criada:h,etapa:0,hist:{0:h},v:2}}},
+  licglpi:{botao:'Adicionar solicitações',titulo:'Adicionar solicitações (contratações e aditivos)',rot:'solicitação(ões)',dica:'<b>Pacote</b> e <b>Data de necessidade</b> são obrigatórios; se informar o GLPI ou a abertura, a etapa "Abertura de GLPI" já fica marcada',
+    cols:[{k:'serv',l:'Pacote *',w:'17%',lista:'dl-pacotes'},{k:'obra',l:'Obra',w:'11%',t:'sel',op:function(){return ['']['concat'](CAD.obras)},vr:'(sem obra)'},{k:'sol',l:'Solicitante',w:'11%',lista:'dl-pessoas'},{k:'tipo',l:'Tipo',w:'13%',t:'sel',op:function(){return TIPOS_CONTR},def:'Contratação'},{k:'emerg',l:'Emergencial?',w:'9%',t:'sel',op:['Não','Sim'],def:'Não'},{k:'necessidade',l:'Data de necessidade *',w:'11%',t:'data'},{k:'abertura',l:'Abertura do GLPI',w:'11%',t:'data'},{k:'idglpi',l:'Nº do GLPI',w:'8%'},{k:'pedserv',l:'Nº pedido de serviço',w:'10%'}],
+    faltam:function(r){var e={};if(!String(r.serv).trim())e.serv=1;if(!gradeData(r.necessidade))e.necessidade=1;return e},
+    cria:function(r,h){var adit=/^Aditivo/.test(r.tipo),ab=gradeData(r.abertura)||'',tem=!!(String(r.idglpi).trim()||ab);return {id:novoId('l'),serv:String(r.serv).trim(),obra:r.obra||'',sol:String(r.sol).trim(),tipo:r.tipo||'Contratação',emerg:adit?'Não':(r.emerg||'Não'),necessidade:gradeData(r.necessidade),abertura:ab,prazo:'',idglpi:String(r.idglpi).trim(),pedserv:String(r.pedserv).trim(),criada:h,etapa:tem?0:-1,hist:tem?{0:ab||h}:{},v:2}}}
+};
+function gOp(c){return typeof c.op==='function'?c.op():(c.op||[])}
+function gDef(c){return c.def||''}
+function gVal(r,c){return r[c.k]==null?'':String(r[c.k])}
+function gradeVazia(k,n){var a=[];for(var i=0;i<n;i++){var r={};GRADES[k].cols.forEach(function(c){r[c.k]=gDef(c)});a.push(r)}return a}
+function gLinhaVazia(k,r){return GRADES[k].cols.every(function(c){return gVal(r,c).trim()===gDef(c)})}
+function gradeContaPreenchidas(k){return (GRADE_ST[k]||[]).filter(function(r){return !gLinhaVazia(k,r)}).length}
+function gValida(iso){var d=new Date(iso+'T12:00:00');return (!isNaN(d)&&d.toISOString().slice(0,10)===iso)?iso:null}
 /* aceita 15/12/2026, 15/12/26, 15-12-2026, 15.12.2026 e 2026-12-15; vazio = sem data; null = inválida */
 function gradeData(t){
   t=String(t||'').trim().split(/\s+/)[0];if(!t)return '';
   var m=/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2}|\d{4})$/.exec(t);
-  if(m){var y=m[3].length===2?'20'+m[3]:m[3];return gradeValida(y+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2))}
-  m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(t);if(m)return gradeValida(t);
+  if(m){var y=m[3].length===2?'20'+m[3]:m[3];return gValida(y+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2))}
+  m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(t);if(m)return gValida(t);
   return null;
 }
-function gradeContaPreenchidas(){return GRADE.filter(function(r){return GRADE_COLS.some(function(c){return String(r[c[0]]).trim()})}).length}
+function gCelulaRuim(c,r){
+  var v=gVal(r,c).trim();
+  if(c.t==='data'&&v&&gradeData(v)===null)return true;
+  if(c.t==='sel'&&gOp(c).indexOf(gVal(r,c))<0)return true;
+  return !!(r.err&&r.err[c.k]);
+}
 function gradeHtml(k){
-  if(k!=='projetos'||!UI.projetos.grade)return '';
-  var linhas=GRADE.map(function(r,i){
-    return '<tr><td class="gn">'+(i+1)+'</td>'+GRADE_COLS.map(function(c,j){
-      var nome=c[0],ruim=(nome==='prometida'&&String(r.prometida).trim()&&gradeData(r.prometida)===null)||(nome==='proj'&&r.erro&&!String(r.proj).trim());
-      return '<td><input data-gr="'+i+'" data-gc="'+j+'" value="'+restricaoEsc(r[nome])+'"'+(nome==='val'?' list="dl-pessoas"':'')+(nome==='prometida'?' placeholder="dd/mm/aaaa" inputmode="numeric"':'')+(ruim?' class="bad"':'')+' autocomplete="off" aria-label="'+restricaoEsc(c[1])+', linha '+(i+1)+'"></td>';
+  var G=GRADES[k];if(!G||!UI[k]||!UI[k].grade)return '';
+  var linhas=GRADE_ST[k].map(function(r,i){
+    return '<tr><td class="gn">'+(i+1)+'</td>'+G.cols.map(function(c,j){
+      var v=gVal(r,c),cls=gCelulaRuim(c,r)?' class="bad"':'',at=' data-gr="'+i+'" data-gc="'+j+'" aria-label="'+restricaoEsc(c.l)+', linha '+(i+1)+'"';
+      if(c.t==='sel'){
+        var ops=gOp(c);
+        return '<td><select'+at+cls+'>'+ops.map(function(o){return '<option value="'+restricaoEsc(o)+'"'+(o===v?' selected':'')+'>'+restricaoEsc(o===''?(c.vr||''):o)+'</option>'}).join('')+(ops.indexOf(v)<0?'<option value="'+restricaoEsc(v)+'" selected>'+restricaoEsc(v)+'</option>':'')+'</select></td>';
+      }
+      return '<td><input'+at+cls+' value="'+restricaoEsc(v)+'"'+(c.lista?' list="'+c.lista+'"':'')+(c.t==='data'?' placeholder="dd/mm/aaaa" inputmode="numeric"':'')+' autocomplete="off"></td>';
     }).join('')+'</tr>';
   }).join('');
-  return '<div class="card grade-prj"><h2>Adicionar projetos</h2><div class="m" style="margin-bottom:10px">Digite direto nas células (Tab anda para o lado, Enter para baixo) ou copie linhas do Excel e cole aqui. Só o <b>Projeto</b> é obrigatório; linhas em branco são ignoradas.</div>'
-   +'<div class="grade-wrap"><table class="grade-tab"><thead><tr><th class="gn">#</th>'+GRADE_COLS.map(function(c){return '<th>'+c[1]+'</th>'}).join('')+'</tr></thead><tbody>'+linhas+'</tbody></table></div>'
-   +'<div class="acoes"><button class="b" data-act="grade-salvar">Adicionar '+gradeContaPreenchidas()+' projeto(s)</button><button class="b sec" data-act="grade-linha">+ Linha</button><button class="b sec" data-act="grade-limpar">Limpar</button><span class="sp"></span><button class="b sec" data-act="grade">Fechar</button></div></div>';
+  return '<div class="card grade-prj"><h2>'+G.titulo+'</h2><div class="m" style="margin-bottom:10px">Digite direto nas células (Tab anda para o lado, Enter para baixo) ou copie linhas do Excel e cole aqui. '+G.dica+'; linhas em branco são ignoradas.</div>'
+   +'<div class="grade-wrap"><table class="grade-tab"><thead><tr><th class="gn">#</th>'+G.cols.map(function(c){return '<th style="width:'+(c.w||'auto')+'">'+c.l+'</th>'}).join('')+'</tr></thead><tbody>'+linhas+'</tbody></table></div>'
+   +'<div class="acoes"><button class="b" data-act="grade-salvar">Adicionar '+gradeContaPreenchidas(k)+' '+G.rot+'</button><button class="b sec" data-act="grade-linha">+ Linha</button><button class="b sec" data-act="grade-limpar">Limpar</button><span class="sp"></span><button class="b sec" data-act="grade">Fechar</button></div></div>';
 }
-function gradeSalva(u){
-  var novos=[],erro=false,hoje=hojeISO();
-  GRADE.forEach(function(r){
-    r.erro=false;
-    if(!GRADE_COLS.some(function(c){return String(r[c[0]]).trim()}))return;
-    if(!String(r.proj).trim()){r.erro=true;erro=true;return}
-    var d=gradeData(r.prometida);if(d===null){erro=true;return}
-    novos.push({id:novoId('j'),proj:String(r.proj).trim(),n:String(r.n).trim(),tip:String(r.tip).trim(),rev:String(r.rev).trim(),resp:'',val:String(r.val).trim(),prometida:d,obs:'',criada:hoje,etapa:-1,hist:{},v:2,fmt:2});
+function gradeSalva(u,k){
+  var G=GRADES[k],novos=[],erro=false,hoje=hojeISO();
+  GRADE_ST[k].forEach(function(r){
+    r.err=null;
+    if(gLinhaVazia(k,r))return;
+    var e=G.faltam(r);
+    G.cols.forEach(function(c){var v=gVal(r,c).trim();if(c.t==='data'&&v&&gradeData(v)===null)e[c.k]=1;if(c.t==='sel'&&gOp(c).indexOf(gVal(r,c))<0)e[c.k]=1});
+    if(Object.keys(e).length){r.err=e;erro=true;return}
+    novos.push(G.cria(r,hoje));
   });
-  if(erro){toast('Corrija as células em vermelho (projeto em branco ou data inválida).');return false}
-  if(!novos.length){toast('Preencha pelo menos o nome de um projeto.');return false}
-  novos.forEach(function(n){PRJ.push(n)});
-  GRADE=gradeVazia(5);u.grade=false;u.seg='todas';
-  toast(novos.length+(novos.length===1?' projeto adicionado.':' projetos adicionados.'));
+  if(erro){toast('Corrija as células em vermelho (campo obrigatório em branco ou valor inválido).');return false}
+  if(!novos.length){toast('Preencha pelo menos uma linha.');return false}
+  var lista=CFG[k].lista();novos.forEach(function(n){lista.push(n)});
+  GRADE_ST[k]=gradeVazia(k,5);u.grade=false;u.seg='todas';
+  toast(novos.length+' '+G.rot+' adicionado(s).');
   return true;
 }
 function gradeFoca(r,c){var f=document.querySelector('[data-gr="'+r+'"][data-gc="'+c+'"]');if(f){f.focus();if(f.select)f.select()}}
-document.addEventListener('input',function(e){
+function gradeEdita(e){
   var t=e.target;if(!t.dataset||t.dataset.gr===undefined)return;
-  var r=+t.dataset.gr,c=+t.dataset.gc,nome=GRADE_COLS[c][0];
-  GRADE[r][nome]=t.value;
-  if(nome==='prometida')t.classList.toggle('bad',!!t.value.trim()&&gradeData(t.value)===null);else t.classList.remove('bad');
-  var b=document.querySelector('[data-act="grade-salvar"]');if(b)b.textContent='Adicionar '+gradeContaPreenchidas()+' projeto(s)';
-});
+  var k=CURRENT_SCREEN,G=GRADES[k];if(!G||!GRADE_ST[k])return;
+  var r=+t.dataset.gr,c=G.cols[+t.dataset.gc],lin=GRADE_ST[k][r];
+  lin[c.k]=t.value;if(lin.err)delete lin.err[c.k];
+  t.classList.toggle('bad',gCelulaRuim(c,lin));
+  var b=document.querySelector('[data-act="grade-salvar"]');if(b)b.textContent='Adicionar '+gradeContaPreenchidas(k)+' '+G.rot;
+}
+document.addEventListener('input',gradeEdita);
+document.addEventListener('change',gradeEdita);
 /* Enter desce uma linha (Shift+Enter sobe); no fim da grade cria uma linha nova. Tab anda para o lado, como o navegador já faz. */
 document.addEventListener('keydown',function(e){
   var t=e.target;if(!t.dataset||t.dataset.gr===undefined||e.key!=='Enter')return;
+  var k=CURRENT_SCREEN;if(!GRADES[k]||!GRADE_ST[k])return;
   e.preventDefault();
   var r=+t.dataset.gr,c=+t.dataset.gc,nr=r+(e.shiftKey?-1:1);
   if(nr<0)return;
-  if(nr>=GRADE.length){GRADE.push(gradeVazia(1)[0]);renderOutras()}
+  if(nr>=GRADE_ST[k].length){GRADE_ST[k].push(gradeVazia(k,1)[0]);renderOutras()}
   gradeFoca(nr,c);
 });
-/* colar do Excel: várias linhas e colunas de uma vez, a partir da célula onde o cursor está */
+/* colar do Excel: várias linhas e colunas de uma vez, a partir da célula onde o cursor está; células de lista aceitam o texto da opção */
 document.addEventListener('paste',function(e){
   var t=e.target;if(!t.dataset||t.dataset.gr===undefined)return;
+  var k=CURRENT_SCREEN,G=GRADES[k];if(!G||!GRADE_ST[k])return;
   var txt=((e.clipboardData||window.clipboardData).getData('text')||'').replace(/\r/g,'').replace(/\n+$/,'');
   if(txt.indexOf('\t')<0&&txt.indexOf('\n')<0)return;
   e.preventDefault();
   var r0=+t.dataset.gr,c0=+t.dataset.gc;
   txt.split('\n').forEach(function(l,i){
-    while(GRADE.length<=r0+i)GRADE.push(gradeVazia(1)[0]);
-    l.split('\t').forEach(function(v,j){if(c0+j<GRADE_COLS.length)GRADE[r0+i][GRADE_COLS[c0+j][0]]=v.trim()});
+    while(GRADE_ST[k].length<=r0+i)GRADE_ST[k].push(gradeVazia(k,1)[0]);
+    l.split('\t').forEach(function(v,j){
+      if(c0+j>=G.cols.length)return;
+      var c=G.cols[c0+j];v=String(v).trim();
+      if(c.t==='sel'){var hit=gOp(c).filter(function(o){return o.toLowerCase()===v.toLowerCase()})[0];GRADE_ST[k][r0+i][c.k]=hit!==undefined?hit:(v===''?gDef(c):v)}
+      else GRADE_ST[k][r0+i][c.k]=v;
+    });
   });
   renderOutras();gradeFoca(r0,c0);
-});
-function lerForm(cfg){
+});function lerForm(cfg){
   var o={},falta=[];
   cfg.campos.forEach(function(c){var el=document.getElementById('fx-'+c[0]);var val=el?el.value.trim():'';
     if(c[2]==='etapa'||c[2]==='etapaN'||c[2]==='number')val=Number(val)||0;o[c[0]]=val});
@@ -1471,10 +1510,10 @@ document.addEventListener('click',function(e){
     if(!MEU_NOME){window.fgrPedirNome('',function(n){window.fgrSetNome(n);pa.resp=n;toast('Você assumiu este pedido.');renderOutras()},false);return}
     pa.resp=MEU_NOME;toast('Você assumiu este pedido.');
   }
-  else if(act==='grade'){u.grade=!u.grade;if(u.grade&&!GRADE.length)GRADE=gradeVazia(5)}
-  else if(act==='grade-linha')GRADE.push(gradeVazia(1)[0]);
-  else if(act==='grade-limpar')GRADE=gradeVazia(5);
-  else if(act==='grade-salvar'){if(!gradeSalva(u)){renderOutras();return}}
+  else if(act==='grade'){u.grade=!u.grade;if(u.grade&&!(GRADE_ST[k]&&GRADE_ST[k].length))GRADE_ST[k]=gradeVazia(k,5)}
+  else if(act==='grade-linha')GRADE_ST[k].push(gradeVazia(k,1)[0]);
+  else if(act==='grade-limpar')GRADE_ST[k]=gradeVazia(k,5);
+  else if(act==='grade-salvar'){if(!gradeSalva(u,k)){renderOutras();return}}
   else if(act==='pz')u.pz=!u.pz;
   else if(act==='salvar-prazos-flow'){['orc','obra','plan','proj','sup'].forEach(function(k){var el=document.getElementById('pzf-'+k);if(el)PRAZOS_FLOW[k]=Math.max(0,Number(el.value)||0)});u.pz=false;toast('Prazos padrão salvos.')}
   else if(act==='salvar-prazos-sup'){TIPOS_CONTR.forEach(function(t,i){[0,1].forEach(function(j){var el=document.getElementById('pzs-'+i+'-'+j);if(el)PRAZOS_SUP[t][j]=Math.max(0,Number(el.value)||0)})});u.pz=false;toast('Prazos padrão salvos.')}
@@ -1498,7 +1537,7 @@ document.addEventListener('click',function(e){
     setEtapa(y,alvoE)}
   else return;
   renderOutras();
-  if((act==='grade'&&UI[k].grade)||act==='grade-linha'){var gi=document.querySelectorAll('.grade-prj input');var alvo=act==='grade-linha'?gi[gi.length-GRADE_COLS.length]:gi[0];if(alvo){alvo.focus({preventScroll:false})}}
+  if((act==='grade'&&UI[k].grade)||act==='grade-linha'){var gi=document.querySelectorAll('.grade-prj input,.grade-prj select');var alvo=act==='grade-linha'?gi[gi.length-GRADES[k].cols.length]:gi[0];if(alvo){alvo.focus({preventScroll:false})}}
   if(act==='novo'||act==='editar'){var fc=document.querySelector('.formc');if(fc&&fc.scrollIntoView)fc.scrollIntoView({block:'start'});var f1=document.querySelector('.formc input,.formc select');if(f1)f1.focus({preventScroll:true})}
 });
 /* preenchimento direto na linha: grava ao sair do campo; a tabela é redesenhada quando o foco sai da linha (senão perderia o foco ao passar de um campo para o outro) */
