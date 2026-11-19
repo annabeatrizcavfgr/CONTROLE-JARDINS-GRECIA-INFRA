@@ -494,6 +494,18 @@ button.b.bad{background:var(--bad);border-color:var(--bad);color:var(--surface)}
 .db-leg{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2)}
 .db-leg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px}
 .db-leg b{font-variant-numeric:tabular-nums}
+.grade-prj{padding:16px 18px}
+.grade-wrap{overflow:auto;max-height:60vh;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.grade-tab{border-collapse:collapse;width:100%;min-width:920px;font-size:13px}
+.grade-tab th{position:sticky;top:0;z-index:1;background:var(--surface-2);color:var(--muted);font:600 11px var(--sans);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:8px 10px;border:1px solid var(--line)}
+.grade-tab td{border:1px solid var(--line);padding:0;background:var(--surface)}
+.grade-tab th.gn,.grade-tab td.gn{width:36px;min-width:36px;text-align:center;color:var(--muted);background:var(--surface-2);font-size:11.5px;padding:0 4px}
+.grade-tab input{display:block;width:100%;height:34px;border:0;border-radius:0;outline:0;box-shadow:none;background:transparent;padding:0 10px;font:13px var(--sans);color:var(--ink)}
+.grade-tab input:focus{outline:2px solid var(--accent);outline-offset:-2px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.grade-tab input.bad{background:color-mix(in srgb,var(--bad) 12%,var(--surface));color:var(--bad)}
+.grade-tab input::placeholder{color:var(--muted);opacity:.6}
+.grade-tab th:nth-child(2){width:34%}
+.grade-tab th:nth-child(3){width:11%}.grade-tab th:nth-child(5){width:8%}.grade-tab th:nth-child(7){width:13%}
 .tema-btn{display:inline-grid;place-items:center;width:34px;height:34px;padding:0;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
 .tema-btn:hover{background:var(--line-2);color:var(--ink)}
 .tema-btn svg{width:18px;height:18px}
@@ -1224,7 +1236,7 @@ var CFG={
   nota:'Clique no círculo para marcar a etapa. O alerta vermelho (! no dia, +N nos dias de atraso) avisa que o prazo da área venceu: hora de cobrar.',
   campos:[['n','Nome do aditivo *','text',null,'Ex.: Reforço de quadro elétrico',1],['idfm','ID no FlowMaster','text',null,'Ex.: 173'],['origem','Aberto por','select',['Obra','Orçamento']],['obra','Obra','obra'],['sol','Solicitante','text','PESSOAS','Ex.: Viktor'],['motivo','Motivo','select',MOTIVOS_FLOW],['desvio','Está em','select',['Fluxo padrão','Projetos','Suprimentos']],['etapa','Etapa atual','etapa',ETAPAS_FLOW],['criada','Data de criação','date']],
   vazio:function(){return {n:'',idfm:'',origem:'Obra',obra:obraPad(),sol:'',motivo:'Não informado',desvio:'Fluxo padrão',etapa:0,criada:hojeISO()}},obrig:['n'],prefixo:'f'},
- projetos:{lista:function(){return PRJ},itens:tPrj,rotulo:['projeto','projetos'],novo:'Novo projeto',busca:'Buscar por projeto, código, tipologia ou responsável pela validação',
+ projetos:{lista:function(){return PRJ},itens:tPrj,rotulo:['projeto','projetos'],novo:'Novo projeto',grade:true,busca:'Buscar por projeto, código, tipologia ou responsável pela validação',
   seg:[['projetos','Com a equipe de projetos'],['obra','Com a obra (validar)'],['concluidos','Executivo disponibilizado'],['todas','Todos']],
   extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button>'},
   filtros:function(){return [['status','Etapa',opts2(ETAPAS_PRJ)],['val','Responsável validação',opts2(uniq(PRJ.map(function(p){return p.val})))],['tip','Tipologia / área',opts2(uniq(PRJ.map(function(p){return p.tip})))]]},
@@ -1325,7 +1337,7 @@ function barraHtml(k){
    +'<div class="busca">'+ic('search',16)+'<input id="f-busca" value="'+restricaoEsc(u.busca)+'" placeholder="'+cfg.busca+'" autocomplete="off" aria-label="Buscar"></div>'
    +'<button class="b sec sm" data-act="filtros" aria-expanded="'+u.aberto+'">'+ic('filter',15)+' Filtros'+(ativos.length?' <span class="bd2">'+ativos.length+'</span>':'')+'</button>'
    +(cfg.extraBtn?cfg.extraBtn(u):'')
-   +(cfg.novos?cfg.novos.map(function(n){return '<button class="b sm" data-act="novo" data-v="'+n[0]+'">+ '+n[1]+'</button>'}).join(''):'<button class="b sm" data-act="novo">+ '+cfg.novo+'</button>')+'</div>'
+   +(cfg.novos?cfg.novos.map(function(n){return '<button class="b sm" data-act="novo" data-v="'+n[0]+'">+ '+n[1]+'</button>'}).join(''):(cfg.grade?'<button class="b sm" data-act="grade">+ Adicionar projetos</button>':'<button class="b sm" data-act="novo">+ '+cfg.novo+'</button>'))+'</div>'
    +(u.aberto?'<div class="filtros mini">'+fl.map(function(f){return '<div class="campo"><label for="ff-'+f[0]+'">'+f[1]+'</label><select id="ff-'+f[0]+'" data-f="'+f[0]+'"><option value="">Todos</option>'+f[2].map(function(o){return '<option value="'+restricaoEsc(o[0])+'"'+(u.f[f[0]]===o[0]?' selected':'')+'>'+restricaoEsc(o[1])+'</option>'}).join('')+'</select></div>'}).join('')+'</div>':'')
    +(ativos.length?'<div class="fchips">'+ativos.map(function(f){return '<span class="chip acc">'+f[1]+': '+restricaoEsc(nomeOpt(f,u.f[f[0]]))+' <button class="ic" style="padding:0 0 0 2px" data-act="rm" data-v="'+f[0]+'" aria-label="Remover filtro '+f[1]+'">✕</button></span>'}).join('')+'<button class="ex-link" data-act="limpar" style="font-size:12px">Limpar tudo</button></div>':'')+'</div>';
 }
@@ -1352,11 +1364,83 @@ function renderOutras(){
   var k=CURRENT_SCREEN;
   /* guarda a rolagem das tabelas e da página, para o redesenho não jogar tudo de volta ao início */
   var sc=[].map.call(document.querySelectorAll('.tab.tbl'),function(t){return [t.scrollLeft,t.scrollTop]}),wx=window.scrollX,wy=window.scrollY,mesma=(ULT_TELA===k);
-  $('#main').innerHTML=barraHtml(k)+(UI[k].pz?(k==='projetos'?prazosHtml():k==='licglpi'?prazosSupHtml():k==='flows'?prazosFlowHtml():''):'')+formHtml(k)+'<div id="acomp-lista">'+listaHtml(k)+'</div>';
+  $('#main').innerHTML=barraHtml(k)+(UI[k].pz?(k==='projetos'?prazosHtml():k==='licglpi'?prazosSupHtml():k==='flows'?prazosFlowHtml():''):'')+formHtml(k)+gradeHtml(k)+'<div id="acomp-lista">'+listaHtml(k)+'</div>';
   shell();
   if(mesma){[].forEach.call(document.querySelectorAll('.tab.tbl'),function(t,i){if(sc[i]){t.scrollLeft=sc[i][0];t.scrollTop=sc[i][1]}});window.scrollTo(wx,wy)}
   ULT_TELA=k;
-}function lerForm(cfg){
+}/* ---------- projetos: adicionar em grade, como planilha ---------- */
+var GRADE=[];
+var GRADE_COLS=[['proj','Projeto / disciplina *'],['n','Código'],['tip','Tipologia / área'],['rev','Revisão'],['val','Responsável pela validação'],['prometida','Previsão de entrega']];
+function gradeVazia(n){var a=[];for(var i=0;i<n;i++)a.push({proj:'',n:'',tip:'',rev:'',val:'',prometida:''});return a}
+function gradeValida(iso){var d=new Date(iso+'T12:00:00');return (!isNaN(d)&&d.toISOString().slice(0,10)===iso)?iso:null}
+/* aceita 15/12/2026, 15/12/26, 15-12-2026, 15.12.2026 e 2026-12-15; vazio = sem data; null = inválida */
+function gradeData(t){
+  t=String(t||'').trim().split(/\s+/)[0];if(!t)return '';
+  var m=/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2}|\d{4})$/.exec(t);
+  if(m){var y=m[3].length===2?'20'+m[3]:m[3];return gradeValida(y+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2))}
+  m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(t);if(m)return gradeValida(t);
+  return null;
+}
+function gradeContaPreenchidas(){return GRADE.filter(function(r){return GRADE_COLS.some(function(c){return String(r[c[0]]).trim()})}).length}
+function gradeHtml(k){
+  if(k!=='projetos'||!UI.projetos.grade)return '';
+  var linhas=GRADE.map(function(r,i){
+    return '<tr><td class="gn">'+(i+1)+'</td>'+GRADE_COLS.map(function(c,j){
+      var nome=c[0],ruim=(nome==='prometida'&&String(r.prometida).trim()&&gradeData(r.prometida)===null)||(nome==='proj'&&r.erro&&!String(r.proj).trim());
+      return '<td><input data-gr="'+i+'" data-gc="'+j+'" value="'+restricaoEsc(r[nome])+'"'+(nome==='val'?' list="dl-pessoas"':'')+(nome==='prometida'?' placeholder="dd/mm/aaaa" inputmode="numeric"':'')+(ruim?' class="bad"':'')+' autocomplete="off" aria-label="'+restricaoEsc(c[1])+', linha '+(i+1)+'"></td>';
+    }).join('')+'</tr>';
+  }).join('');
+  return '<div class="card grade-prj"><h2>Adicionar projetos</h2><div class="m" style="margin-bottom:10px">Digite direto nas células (Tab anda para o lado, Enter para baixo) ou copie linhas do Excel e cole aqui. Só o <b>Projeto</b> é obrigatório; linhas em branco são ignoradas.</div>'
+   +'<div class="grade-wrap"><table class="grade-tab"><thead><tr><th class="gn">#</th>'+GRADE_COLS.map(function(c){return '<th>'+c[1]+'</th>'}).join('')+'</tr></thead><tbody>'+linhas+'</tbody></table></div>'
+   +'<div class="acoes"><button class="b" data-act="grade-salvar">Adicionar '+gradeContaPreenchidas()+' projeto(s)</button><button class="b sec" data-act="grade-linha">+ Linha</button><button class="b sec" data-act="grade-limpar">Limpar</button><span class="sp"></span><button class="b sec" data-act="grade">Fechar</button></div></div>';
+}
+function gradeSalva(u){
+  var novos=[],erro=false,hoje=hojeISO();
+  GRADE.forEach(function(r){
+    r.erro=false;
+    if(!GRADE_COLS.some(function(c){return String(r[c[0]]).trim()}))return;
+    if(!String(r.proj).trim()){r.erro=true;erro=true;return}
+    var d=gradeData(r.prometida);if(d===null){erro=true;return}
+    novos.push({id:novoId('j'),proj:String(r.proj).trim(),n:String(r.n).trim(),tip:String(r.tip).trim(),rev:String(r.rev).trim(),resp:'',val:String(r.val).trim(),prometida:d,obs:'',criada:hoje,etapa:0,hist:{0:hoje},v:2});
+  });
+  if(erro){toast('Corrija as células em vermelho (projeto em branco ou data inválida).');return false}
+  if(!novos.length){toast('Preencha pelo menos o nome de um projeto.');return false}
+  novos.forEach(function(n){PRJ.push(n)});
+  GRADE=gradeVazia(5);u.grade=false;u.seg='todas';
+  toast(novos.length+(novos.length===1?' projeto adicionado.':' projetos adicionados.'));
+  return true;
+}
+function gradeFoca(r,c){var f=document.querySelector('[data-gr="'+r+'"][data-gc="'+c+'"]');if(f){f.focus();if(f.select)f.select()}}
+document.addEventListener('input',function(e){
+  var t=e.target;if(!t.dataset||t.dataset.gr===undefined)return;
+  var r=+t.dataset.gr,c=+t.dataset.gc,nome=GRADE_COLS[c][0];
+  GRADE[r][nome]=t.value;
+  if(nome==='prometida')t.classList.toggle('bad',!!t.value.trim()&&gradeData(t.value)===null);else t.classList.remove('bad');
+  var b=document.querySelector('[data-act="grade-salvar"]');if(b)b.textContent='Adicionar '+gradeContaPreenchidas()+' projeto(s)';
+});
+/* Enter desce uma linha (Shift+Enter sobe); no fim da grade cria uma linha nova. Tab anda para o lado, como o navegador já faz. */
+document.addEventListener('keydown',function(e){
+  var t=e.target;if(!t.dataset||t.dataset.gr===undefined||e.key!=='Enter')return;
+  e.preventDefault();
+  var r=+t.dataset.gr,c=+t.dataset.gc,nr=r+(e.shiftKey?-1:1);
+  if(nr<0)return;
+  if(nr>=GRADE.length){GRADE.push(gradeVazia(1)[0]);renderOutras()}
+  gradeFoca(nr,c);
+});
+/* colar do Excel: várias linhas e colunas de uma vez, a partir da célula onde o cursor está */
+document.addEventListener('paste',function(e){
+  var t=e.target;if(!t.dataset||t.dataset.gr===undefined)return;
+  var txt=((e.clipboardData||window.clipboardData).getData('text')||'').replace(/\r/g,'').replace(/\n+$/,'');
+  if(txt.indexOf('\t')<0&&txt.indexOf('\n')<0)return;
+  e.preventDefault();
+  var r0=+t.dataset.gr,c0=+t.dataset.gc;
+  txt.split('\n').forEach(function(l,i){
+    while(GRADE.length<=r0+i)GRADE.push(gradeVazia(1)[0]);
+    l.split('\t').forEach(function(v,j){if(c0+j<GRADE_COLS.length)GRADE[r0+i][GRADE_COLS[c0+j][0]]=v.trim()});
+  });
+  renderOutras();gradeFoca(r0,c0);
+});
+function lerForm(cfg){
   var o={},falta=[];
   cfg.campos.forEach(function(c){var el=document.getElementById('fx-'+c[0]);var val=el?el.value.trim():'';
     if(c[2]==='etapa'||c[2]==='etapaN'||c[2]==='number')val=Number(val)||0;o[c[0]]=val});
@@ -1378,6 +1462,10 @@ document.addEventListener('click',function(e){
     if(!MEU_NOME){window.fgrPedirNome('',function(n){window.fgrSetNome(n);pa.resp=n;toast('Você assumiu este pedido.');renderOutras()},false);return}
     pa.resp=MEU_NOME;toast('Você assumiu este pedido.');
   }
+  else if(act==='grade'){u.grade=!u.grade;if(u.grade&&!GRADE.length)GRADE=gradeVazia(5)}
+  else if(act==='grade-linha')GRADE.push(gradeVazia(1)[0]);
+  else if(act==='grade-limpar')GRADE=gradeVazia(5);
+  else if(act==='grade-salvar'){if(!gradeSalva(u)){renderOutras();return}}
   else if(act==='pz')u.pz=!u.pz;
   else if(act==='salvar-prazos-flow'){['orc','obra','plan','proj','sup'].forEach(function(k){var el=document.getElementById('pzf-'+k);if(el)PRAZOS_FLOW[k]=Math.max(0,Number(el.value)||0)});u.pz=false;toast('Prazos padrão salvos.')}
   else if(act==='salvar-prazos-sup'){TIPOS_CONTR.forEach(function(t,i){[0,1].forEach(function(j){var el=document.getElementById('pzs-'+i+'-'+j);if(el)PRAZOS_SUP[t][j]=Math.max(0,Number(el.value)||0)})});u.pz=false;toast('Prazos padrão salvos.')}
@@ -1401,6 +1489,7 @@ document.addEventListener('click',function(e){
     setEtapa(y,alvoE)}
   else return;
   renderOutras();
+  if((act==='grade'&&UI[k].grade)||act==='grade-linha'){var gi=document.querySelectorAll('.grade-prj input');var alvo=act==='grade-linha'?gi[gi.length-GRADE_COLS.length]:gi[0];if(alvo){alvo.focus({preventScroll:false})}}
   if(act==='novo'||act==='editar'){var fc=document.querySelector('.formc');if(fc&&fc.scrollIntoView)fc.scrollIntoView({block:'start'});var f1=document.querySelector('.formc input,.formc select');if(f1)f1.focus({preventScroll:true})}
 });
 /* preenchimento direto na linha: grava ao sair do campo; a tabela é redesenhada quando o foco sai da linha (senão perderia o foco ao passar de um campo para o outro) */
