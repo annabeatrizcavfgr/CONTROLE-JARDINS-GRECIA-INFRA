@@ -1069,11 +1069,20 @@ function licExemplo(){return [
  {id:'l7',serv:'REVESTIMENTO CERÂMICO',sol:'Marina',idglpi:'4776',pedserv:'',tipo:'Aditivo de escopo',emerg:'Não',abertura:isoDe(2),necessidade:isoDe(-25),prazo:'',criada:isoDe(2),etapa:0,hist:mkHist(0,2),v:2}];}
 var LIC=licExemplo();
 /* controle de projetos: a equipe de projetos disponibiliza, a obra valida */
-var ETAPAS_PRJ=['Pendente com a equipe de projetos','Disponibilizado para a obra validar','Validado pela obra','Retorno da validação recebido','Projeto executivo disponibilizado'];
-var CURTO_PRJ=['Pendente c/ projetos','Disponibilizado p/ validar','Validado pela obra','Retorno recebido','Executivo disponibilizado'];
-var COM_PRJ=['projetos','obra','projetos','projetos',''];               /* com quem está o próximo passo */
-var PROX_PRJ=['Disponibilizar até','Validar até','Retornar até','Executivo até',''];
-var PRAZOS_PRJ=[0,15,5,7,10];                                            /* dias padrão para chegar em cada etapa, a partir da anterior (a 1ª conta da solicitação) */
+var ETAPAS_PRJ=['Disponibilizado para a obra validar','Validado pela obra','Retorno da validação recebido','Projeto executivo disponibilizado'];
+var CURTO_PRJ=['Disponibilizado p/ validar','Validado pela obra','Retorno recebido','Executivo disponibilizado'];
+var COM_PRJ=['obra','projetos','projetos',''];               /* com quem está o próximo passo */
+var PROX_PRJ=['Validar até','Retornar até','Executivo até',''];
+function proxRotPrj(e){return e<0?'Disponibilizar até':PROX_PRJ[e]}
+var PRAZOS_PRJ=[15,5,7,10];
+/* Etapas: nada marcado = pendente com a equipe de projetos; depois 4 etapas. Projetos gravados no formato antigo (5 etapas, a primeira
+   era "Pendente com projetos") são convertidos uma vez: a antiga 0 vira "nada marcado" e as demais descem uma posição, com as mesmas datas. */
+function migraPrj(it){
+  if(!it||it.fmt===2)return false;
+  var e=Number(it.etapa);if(isNaN(e))e=-1;
+  var h=it.hist||{},nh={};Object.keys(h).forEach(function(k){if(+k>=1)nh[+k-1]=h[k]});
+  it.etapa=e<=0?-1:e-1;it.hist=nh;it.fmt=2;return true;
+}                                            /* dias padrão para chegar em cada etapa, a partir da anterior (a 1ª conta da solicitação) */
 var PRJ=[
  {id:'j0',n:'ARQ-01',proj:'Arquitetura: plantas executivas',tip:'SB-4Q3S',rev:'R02',resp:'Studio Alfa',val:'Viktor',prometida:isoDe(-3),obs:'Aguardando compatibilização com estrutura.',criada:isoDe(25),etapa:0,hist:mkHist(0,25)},
  {id:'j1',n:'EST-03',proj:'Estrutura: fundação dos lotes 19',tip:'SB-4Q3S',rev:'R01',resp:'Calc Engenharia',val:'Paulo',prometida:'',obs:'',criada:isoDe(30),etapa:1,hist:mkHist(1,4)},
@@ -1090,6 +1099,7 @@ function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify({R:RESTRICOES,
 (function(){var tem=false;try{tem=!!localStorage.getItem(STORE_KEY)}catch(e){}if(!tem){RESTRICOES=[];PED=[];FLO=[];LIC=[];PRJ=[]}EXEMPLO=false})();
 /* itens de exemplo recebem uma obra; os que a usuária cadastrou ficam sem obra até ela escolher */
 (function(){[[PED,/^p[0-9]$/],[LIC,/^l[0-9]$/]].forEach(function(g){g[0].forEach(function(x,i){if(x.obra===undefined&&g[1].test(x.id))x.obra=CAD.obras.length?CAD.obras[i%CAD.obras.length]:''})})})();
+PRJ.forEach(migraPrj);if(PRAZOS_PRJ.length===5)PRAZOS_PRJ=PRAZOS_PRJ.slice(1);
 LIC.forEach(function(l){if(!l.tipo)l.tipo='Contratação';if(/^Aditivo/.test(l.tipo))l.emerg='Não'});
 var PZ_PADRAO={'Contratação':[30,15],'Aditivo de escopo':[15],'Aditivo de quantidade':[10],'Aditivo de prazo':[7]};
 TIPOS_CONTR.forEach(function(t){if(!PRAZOS_SUP[t])PRAZOS_SUP[t]=PZ_PADRAO[t].slice();if(t!=='Contratação')PRAZOS_SUP[t]=[PRAZOS_SUP[t][0]]});
@@ -1120,7 +1130,7 @@ var GRP_ORDEM=['ped','flo','lic','prj'];
 GRUPOS.ped.quick=[['ped','Nº do pedido (UAU)','text','nº pedido',function(r){return r.etapa>=1&&!r.ped},null,1],['cot','Nº da cotação','text','nº cotação',function(r){return r.etapa>=3&&!r.cot},null,3],['oc','Nº da OC','text','nº OC',function(r){return r.etapa>=5&&!r.oc},null,5]];
 GRUPOS.flo.quick=[['idfm','ID no FlowMaster','text','ID',function(r){return r.etapa>=1&&!r.idfm},null,'c1'],['origem','Aberto por','select','',null,['Obra','Orçamento'],'c2'],['desvio','Está em','select','',null,['Fluxo padrão','Projetos','Suprimentos'],'c3']];
 GRUPOS.lic.quick=[['abertura','Data de abertura do GLPI','date','',function(r){return r.etapa>=0&&!r.abertura},null,'c3'],['emerg','Emergencial?','select','',null,['Não','Sim'],'c5',null,null,function(r){return /^Aditivo/.test(r.tipo||'')}],['prazo','Prazo (padrão, pode ser ajustado)','date','',null,null,'c6',function(r){return r.prazo||prazoSup(r)},function(r){var p=r.prazo||prazoSup(r);return !!(p&&r.etapa<2&&p<hojeISO())}],['necessidade','Data de necessidade','date','',function(r){return !r.necessidade},null,'c7'],['idglpi','Nº do GLPI (vira o ID)','text','nº GLPI',function(r){return r.etapa>=0&&!r.idglpi},null,0],['pedserv','Nº do pedido de serviço','text','nº pedido',function(r){return r.etapa>=1&&!r.pedserv},null,1]];
-GRUPOS.prj.quick=[['val','Responsável pela validação','text','responsável',null,null,'c2'],['prometida','Previsão de entrega','date','',function(r){return r.prometida&&r.etapa<4&&(r.etapa<0||COM_PRJ[r.etapa]==='projetos')&&r.prometida<hojeISO()},null,'c3'],['rev','Revisão','text','revisão',null,null,1]];
+GRUPOS.prj.quick=[['val','Responsável pela validação','text','responsável',null,null,'c2'],['prometida','Previsão de entrega','date','',function(r){return r.prometida&&r.etapa<3&&(r.etapa<0||COM_PRJ[r.etapa]==='projetos')&&r.prometida<hojeISO()},null,'c3'],['rev','Revisão','text','revisão',null,null,0]];
 GRUPOS.flo.hide=[];GRUPOS.lic.hide=[];GRUPOS.prj.hide=[1];GRUPOS.ped.hide=[2,3];
 GRUPOS.lic.fcol={0:function(x){return x.raw.serv},1:function(x){return x.raw.idglpi||''},2:function(x){return x.raw.sol||''},3:function(x){return x.raw.abertura||''},4:function(x){return x.raw.tipo||'Contratação'},5:function(x){var t=x.raw.tipo||'Contratação';return /^Aditivo/.test(t)?'Não se aplica':x.raw.emerg==='Sim'?'Emergencial':'Normal'},6:function(x){return x.raw.prazo||prazoSup(x.raw)},7:function(x){return x.raw.necessidade||''}};
 GRUPOS.lic.fdate={3:true,6:true,7:true};
@@ -1174,26 +1184,24 @@ function tLic(){return LIC.map(function(l){
 })}
 /* datas previstas das etapas que ainda não aconteceram: prazo padrão a partir da última etapa marcada; a data prometida vale para a próxima entrega da equipe de projetos */
 function prevPrj(p){
-  if(p.etapa<0)return [];
-  var a=[],cur=p.hist[p.etapa]||p.criada;
-  for(var i=p.etapa+1;i<5;i++){
-    if(i===p.etapa+1&&COM_PRJ[p.etapa]==='projetos'&&p.prometida)cur=p.prometida;else cur=addDias(cur,PRAZOS_PRJ[i]);
+  var a=[],cur=(p.etapa<0?p.criada:(p.hist[p.etapa]||p.criada)),com=p.etapa<0?'projetos':COM_PRJ[p.etapa];
+  for(var i=p.etapa+1;i<4;i++){
+    if(i===p.etapa+1&&com==='projetos'&&p.prometida)cur=p.prometida;else cur=addDias(cur,PRAZOS_PRJ[i]);
     a[i]=cur;
   }
   return a;
-}
-function tPrj(){return PRJ.map(function(p,i){
-  var prev=prevPrj(p),prox=prev[p.etapa+1],atr=!!(prox&&prox<hojeISO()),com=p.etapa<0?'projetos':COM_PRJ[p.etapa],feito=p.etapa>=4;
+}function tPrj(){return PRJ.map(function(p,i){
+  var prev=prevPrj(p),prox=prev[p.etapa+1],atr=!!(prox&&prox<hojeISO()),com=p.etapa<0?'projetos':COM_PRJ[p.etapa],feito=p.etapa>=3;
   var promAtr=p.prometida&&!feito&&com==='projetos'&&p.prometida<hojeISO();
   return {id:p.id,cor:corIdx(i),g:'prj',raw:p,estado:atr?'bad':'',prev:prev,
     sit:feito?'concluidos':com,
-    f:{status:p.etapa<0?'Não iniciado':ETAPAS_PRJ[p.etapa],resp:p.resp,val:p.val,tip:p.tip},
-    txt:[p.n,p.proj,p.tip,p.rev,p.resp,p.val,(p.etapa<0?'não iniciado':ETAPAS_PRJ[p.etapa])].join(' '),
-    gut:feito?'':gutBtn('Projeto','','Projeto '+p.proj+' ('+(p.etapa<0?'não iniciado':ETAPAS_PRJ[p.etapa])+')',p.val),
+    f:{status:p.etapa<0?'Pendente com a equipe de projetos':ETAPAS_PRJ[p.etapa],resp:p.resp,val:p.val,tip:p.tip},
+    txt:[p.n,p.proj,p.tip,p.rev,p.resp,p.val,(p.etapa<0?'pendente com a equipe de projetos':ETAPAS_PRJ[p.etapa])].join(' '),
+    gut:feito?'':gutBtn('Projeto','','Projeto '+p.proj+' ('+(p.etapa<0?'pendente com a equipe de projetos':ETAPAS_PRJ[p.etapa])+')',p.val),
     cols:['<b>'+restricaoEsc(p.proj)+'</b>'+sub(restricaoEsc([p.n,p.tip,p.rev].filter(Boolean).join(' · '))),
       p.resp?restricaoEsc(p.resp):'<span class="m">—</span>',p.val?restricaoEsc(p.val):'<span class="m">—</span>',
       p.prometida?'<span'+(promAtr?' style="color:var(--bad);font-weight:600"':'')+'>'+fd(p.prometida)+'</span>':'<span class="m">—</span>',
-      feito?chip('Concluído','ok'):p.etapa<0?'<span class="m">Ainda não começou</span>'+sub('com a equipe de projetos'):'<span'+(atr?' style="color:var(--bad);font-weight:600"':'')+'>'+PROX_PRJ[p.etapa]+' '+fd(prox)+'</span>'+sub('com '+(com==='obra'?'a obra':'a equipe de projetos')+(atr?' · atrasado':''))]};
+      feito?chip('Concluído','ok'):'<span'+(atr?' style="color:var(--bad);font-weight:600"':'')+'>'+proxRotPrj(p.etapa)+' '+fd(prox)+'</span>'+sub('com '+(com==='obra'?'a obra':'a equipe de projetos')+(atr?' · atrasado':''))]};
 })}
 function stageCell(grupo,x,i){
   var r=x.raw,est=r.etapa,n=GRUPOS[grupo].labels[i];
@@ -1240,9 +1248,9 @@ var CFG={
  projetos:{lista:function(){return PRJ},itens:tPrj,rotulo:['projeto','projetos'],novo:'Novo projeto',grade:true,busca:'Buscar por projeto, código, tipologia ou responsável pela validação',
   seg:[['projetos','Com a equipe de projetos'],['obra','Com a obra (validar)'],['concluidos','Executivo disponibilizado'],['todas','Todos']],
   extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button>'},
-  filtros:function(){return [['status','Etapa',opts2(['Não iniciado'].concat(ETAPAS_PRJ))],['val','Responsável validação',opts2(uniq(PRJ.map(function(p){return p.val})))],['tip','Tipologia / área',opts2(uniq(PRJ.map(function(p){return p.tip})))]]},
+  filtros:function(){return [['status','Etapa',opts2(['Pendente com a equipe de projetos'].concat(ETAPAS_PRJ))],['val','Responsável validação',opts2(uniq(PRJ.map(function(p){return p.val})))],['tip','Tipologia / área',opts2(uniq(PRJ.map(function(p){return p.tip})))]]},
   nota:'Pendente com a equipe de projetos: ainda sem projeto, ou aguardando retorno da validação ou o executivo. Pendente com a obra: projeto disponibilizado esperando validação. Os números em itálico são as datas previstas pelos prazos padrão.',
-  campos:[['proj','Projeto / disciplina *','text',null,'Ex.: Hidráulica: ramais e prumadas',1],['n','Código','text',null,'Ex.: HID-03'],['tip','Tipologia / área','text',null,'Ex.: SB-4Q3S'],['rev','Revisão','text',null,'Ex.: R01'],['val','Responsável pela validação','text','PESSOAS','Ex.: Viktor'],['prometida','Previsão de entrega (data que projetos prometeu para a próxima entrega)','date'],['etapa','Etapa atual','etapaN',ETAPAS_PRJ,'Ainda não começou'],['criada','Data da solicitação','date'],['obs','Observação','area',null,'',1]],
+  campos:[['proj','Projeto / disciplina *','text',null,'Ex.: Hidráulica: ramais e prumadas',1],['n','Código','text',null,'Ex.: HID-03'],['tip','Tipologia / área','text',null,'Ex.: SB-4Q3S'],['rev','Revisão','text',null,'Ex.: R01'],['val','Responsável pela validação','text','PESSOAS','Ex.: Viktor'],['prometida','Previsão de entrega (data que projetos prometeu para a próxima entrega)','date'],['etapa','Etapa atual','etapaN',ETAPAS_PRJ,'Pendente com a equipe de projetos'],['criada','Data da solicitação','date'],['obs','Observação','area',null,'',1]],
   vazio:function(){return {proj:'',n:'',tip:'',rev:'',resp:'',val:'',prometida:'',obs:'',etapa:-1,criada:hojeISO()}},obrig:['proj'],prefixo:'j'},
  licglpi:{lista:function(){return LIC},itens:tLic,rotulo:['solicitação','solicitações'],novo:'Nova solicitação',busca:'Buscar por pacote, nº do GLPI, pedido de serviço ou solicitante',
   extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button>'},
@@ -1343,9 +1351,9 @@ function barraHtml(k){
    +(ativos.length?'<div class="fchips">'+ativos.map(function(f){return '<span class="chip acc">'+f[1]+': '+restricaoEsc(nomeOpt(f,u.f[f[0]]))+' <button class="ic" style="padding:0 0 0 2px" data-act="rm" data-v="'+f[0]+'" aria-label="Remover filtro '+f[1]+'">✕</button></span>'}).join('')+'<button class="ex-link" data-act="limpar" style="font-size:12px">Limpar tudo</button></div>':'')+'</div>';
 }
 function prazosHtml(){
-  var rot=['','Projetos disponibiliza o projeto (a contar da solicitação)','Obra valida o projeto (a contar da disponibilização)','Projetos dá o retorno da validação (a contar da validação)','Projetos disponibiliza o executivo (a contar do retorno)'];
+  var rot=['Projetos disponibiliza o projeto (a contar da solicitação)','Obra valida o projeto (a contar da disponibilização)','Projetos dá o retorno da validação (a contar da validação)','Projetos disponibiliza o executivo (a contar do retorno)'];
   return '<div class="card"><h2>Prazos padrão por etapa</h2><div class="m" style="margin-bottom:10px">Dias que cada etapa deve levar a partir da anterior. Servem para calcular a data prevista das etapas que ainda não aconteceram. Quando a equipe de projetos promete uma data, ela vale para a próxima entrega dela.</div><div class="fgrid">'
-   +[1,2,3,4].map(function(i){return '<div class="campo"><label for="pz-'+i+'">'+rot[i]+'</label><input id="pz-'+i+'" type="number" min="0" value="'+PRAZOS_PRJ[i]+'"></div>'}).join('')
+   +[0,1,2,3].map(function(i){return '<div class="campo"><label for="pz-'+i+'">'+rot[i]+'</label><input id="pz-'+i+'" type="number" min="0" value="'+PRAZOS_PRJ[i]+'"></div>'}).join('')
    +'</div><div class="acoes"><button class="b" data-act="salvar-prazos">Salvar prazos</button><button class="b sec" data-act="pz">Fechar</button></div></div>';
 }
 function prazosSupHtml(){
@@ -1402,7 +1410,7 @@ function gradeSalva(u){
     if(!GRADE_COLS.some(function(c){return String(r[c[0]]).trim()}))return;
     if(!String(r.proj).trim()){r.erro=true;erro=true;return}
     var d=gradeData(r.prometida);if(d===null){erro=true;return}
-    novos.push({id:novoId('j'),proj:String(r.proj).trim(),n:String(r.n).trim(),tip:String(r.tip).trim(),rev:String(r.rev).trim(),resp:'',val:String(r.val).trim(),prometida:d,obs:'',criada:hoje,etapa:-1,hist:{},v:2});
+    novos.push({id:novoId('j'),proj:String(r.proj).trim(),n:String(r.n).trim(),tip:String(r.tip).trim(),rev:String(r.rev).trim(),resp:'',val:String(r.val).trim(),prometida:d,obs:'',criada:hoje,etapa:-1,hist:{},v:2,fmt:2});
   });
   if(erro){toast('Corrija as células em vermelho (projeto em branco ou data inválida).');return false}
   if(!novos.length){toast('Preencha pelo menos o nome de um projeto.');return false}
@@ -1470,7 +1478,7 @@ document.addEventListener('click',function(e){
   else if(act==='pz')u.pz=!u.pz;
   else if(act==='salvar-prazos-flow'){['orc','obra','plan','proj','sup'].forEach(function(k){var el=document.getElementById('pzf-'+k);if(el)PRAZOS_FLOW[k]=Math.max(0,Number(el.value)||0)});u.pz=false;toast('Prazos padrão salvos.')}
   else if(act==='salvar-prazos-sup'){TIPOS_CONTR.forEach(function(t,i){[0,1].forEach(function(j){var el=document.getElementById('pzs-'+i+'-'+j);if(el)PRAZOS_SUP[t][j]=Math.max(0,Number(el.value)||0)})});u.pz=false;toast('Prazos padrão salvos.')}
-  else if(act==='salvar-prazos'){[1,2,3,4].forEach(function(i){var el=document.getElementById('pz-'+i);if(el)PRAZOS_PRJ[i]=Math.max(0,Number(el.value)||0)});u.pz=false;toast('Prazos padrão salvos.')}
+  else if(act==='salvar-prazos'){[0,1,2,3].forEach(function(i){var el=document.getElementById('pz-'+i);if(el)PRAZOS_PRJ[i]=Math.max(0,Number(el.value)||0)});u.pz=false;toast('Prazos padrão salvos.')}
   else if(act==='novo'){u.form={id:null,v:cfg.vazio()}}
   else if(act==='editar'){var x=achar(v);if(!x)return;u.form={id:v,v:JSON.parse(JSON.stringify(x))}}
   else if(act==='cancelar')u.form=null;
@@ -1478,7 +1486,7 @@ document.addEventListener('click',function(e){
     var sc=cfg,r=lerForm(sc);if(r.falta.length){toast('Preencha: '+r.falta.join(', ')+'.');return}
     var o=r.o,alvo=u.form.id?achar(u.form.id):null;
     if(alvo){var novaEtapa=o.etapa;delete o.etapa;Object.keys(o).forEach(function(key){alvo[key]=o[key]});if(novaEtapa!==alvo.etapa)setEtapa(alvo,novaEtapa);toast('Alterações salvas.')}
-    else{var n=Object.assign({id:novoId(sc.prefixo),hist:{},v:2,criada:hojeISO()},o);var est=n.etapa;n.etapa=0;n.hist={0:n.criada||hojeISO()};if(est>0)setEtapa(n,est);if(est<0){n.etapa=-1;n.hist={}}sc.lista().push(n);toast('Incluído.');u.seg='todas'}
+    else{var n=Object.assign({id:novoId(sc.prefixo),hist:{},v:2,criada:hojeISO()},o);if(sc.prefixo==='j')n.fmt=2;var est=n.etapa;n.etapa=0;n.hist={0:n.criada||hojeISO()};if(est>0)setEtapa(n,est);if(est<0){n.etapa=-1;n.hist={}}sc.lista().push(n);toast('Incluído.');u.seg='todas'}
     u.form=null;
   }
   else if(act==='excluir')u.del=v;
@@ -1603,7 +1611,7 @@ function hojeDados(){
   fl.sort(function(a,b){return b.al.atraso-a.al.atraso});
   var lc=[];LIC.forEach(function(l){if(!mObra(l.obra)||l.etapa>=2)return;var pz=l.prazo||prazoSup(l);if(pz&&pz<hj)lc.push({l:l,pz:pz,atraso:diasDesde(pz)})});
   lc.sort(function(a,b){return b.atraso-a.atraso});
-  var pj=[];PRJ.forEach(function(p){if(p.etapa>=4)return;
+  var pj=[];PRJ.forEach(function(p){if(p.etapa>=3)return;
     var prox=prevPrj(p)[p.etapa+1],com=p.etapa<0?'projetos':COM_PRJ[p.etapa],atr=!!(prox&&prox<hj),prom=!!(p.prometida&&com==='projetos'&&p.prometida<hj);
     if(atr||prom)pj.push({p:p,prox:prox,com:com,prom:prom,atraso:diasDesde(prom?p.prometida:prox)})});
   pj.sort(function(a,b){return b.atraso-a.atraso});
@@ -1645,7 +1653,7 @@ function renderHoje(){
   flo.forEach(normFlow);
   function n(a,fn){return a.filter(fn).length}
   var pedAnd=n(ped,function(p){return p.etapa<6}),floAnd=n(flo,function(f){return f.etapa<7}),licAnd=n(lic,function(l){return l.etapa<3});
-  var prjAb=PRJ.filter(function(p){return p.etapa<4}),prjObra=n(prjAb,function(p){return COM_PRJ[p.etapa]==='obra'}),prjProj=prjAb.length-prjObra,prjFim=PRJ.length-prjAb.length;
+  var prjAb=PRJ.filter(function(p){return p.etapa<3}),prjObra=n(prjAb,function(p){return COM_PRJ[p.etapa]==='obra'}),prjProj=prjAb.length-prjObra,prjFim=PRJ.length-prjAb.length;
   var gAll=restV(),gAb=gAll.filter(function(r){return r.status!=='resolvido'});
   var gCls={hi:0,md:0,lo:0,none:0};gAb.forEach(function(r){gCls[restricaoClsKey(restricaoCls(r))]++});
   var gSt={aberto:0,em_andamento:0,resolvido:0};gAll.forEach(function(r){gSt[restricaoStatusKey(r.status)]++});
@@ -1664,7 +1672,7 @@ function renderHoje(){
   var rLic=['GLPI não aberto'].concat(ETAPAS_LIC),vLic=rLic.map(function(_,i){return n(lic,function(l){return l.etapa+1===i})});
   var mkFl=function(x){return hjRow(x.f.n,[x.f.idfm?'ID '+x.f.idfm:'','com '+x.al.area+' (prazo '+fmtDate2(x.al.due)+')'].filter(Boolean).join(' · '),obraTag(x.f.obra)+chip(x.al.atraso>0?x.al.atraso+' dia(s) de atraso':'vence hoje','bad'))};
   var mkLc=function(x){return hjRow(x.l.serv,[x.l.tipo||'Contratação',x.l.idglpi?'GLPI #'+x.l.idglpi:'',x.l.sol,'prazo '+fmtDate2(x.pz)].filter(Boolean).join(' · '),obraTag(x.l.obra)+chip(x.atraso+' dia(s) de atraso','bad'))};
-  var mkPj=function(x){var p=x.p;return hjRow(p.proj,[p.n,'com '+(x.com==='obra'?'a obra':'a equipe de projetos'),x.prom?'previsão de entrega '+fmtDate2(p.prometida):PROX_PRJ[p.etapa]+' '+fmtDate2(x.prox)].filter(Boolean).join(' · '),chip(x.atraso+' dia(s) de atraso','bad'))};
+  var mkPj=function(x){var p=x.p;return hjRow(p.proj,[p.n,'com '+(x.com==='obra'?'a obra':'a equipe de projetos'),x.prom?'previsão de entrega '+fmtDate2(p.prometida):proxRotPrj(p.etapa)+' '+fmtDate2(x.prox)].filter(Boolean).join(' · '),chip(x.atraso+' dia(s) de atraso','bad'))};
   var mkGt=function(x){var r=x.r,t=String(r.restricao||'');return hjRow('Item '+r.item+' · '+(r.servico||'sem serviço'),t.length>110?t.slice(0,109)+'…':t,(x.c!=null?'<span class="restricao-cls restricao-cls-'+restricaoClsKey(x.c)+'" style="min-width:36px;padding:3px 8px;font-size:12.5px">'+x.c+'</span>':'')+chip(x.atraso+' dia(s) de atraso','bad'))};
   var mkPd=function(x){var p=x.p;return hjRow(p.d,[p.n,p.serv,p.eng?'Eng. '+p.eng:'',ETAPAS_PED[p.etapa]].filter(Boolean).join(' · '),obraTag(p.obra)+chip('sem responsável','warn'))};
   var blocos=dbBloco('Pedidos','pedidos',dbBarras(ETAPAS_PED_CURTO,vPed,vPed.map(function(_,i){return i===6?'ok':''})),d.pd,mkPd,'sem responsável','warn')
@@ -1678,7 +1686,7 @@ function renderHoje(){
    +'<div class="m">Para cobrar: pedidos que ainda não têm responsável; flows com o prazo da área vencido; contratações com prazo vencido antes de "Contratação concluída"; projetos com prazo ou previsão de entrega vencidos; restrições da Matriz GUT em aberto com prazo vencido.</div>';
 }function shell(){
   document.getElementById('nav').innerHTML=NAV.map(function(n){
-    var bd=n[0]==='hoje'?hojeDados().total:n[0]==='cadastros'?0:n[0]==='restricoes'?RESTRICOES.filter(function(r){return r.status!=='resolvido'}).length:n[0]==='pedidos'?PED.filter(function(p){return p.etapa<6&&mObra(p.obra)}).length:n[0]==='projetos'?PRJ.filter(function(p){return p.etapa<4}).length:n[0]==='flows'?FLO.filter(function(f){return f.etapa<7&&mObra(f.obra)}).length:LIC.filter(function(l){return l.etapa<3&&mObra(l.obra)}).length;
+    var bd=n[0]==='hoje'?hojeDados().total:n[0]==='cadastros'?0:n[0]==='restricoes'?RESTRICOES.filter(function(r){return r.status!=='resolvido'}).length:n[0]==='pedidos'?PED.filter(function(p){return p.etapa<6&&mObra(p.obra)}).length:n[0]==='projetos'?PRJ.filter(function(p){return p.etapa<3}).length:n[0]==='flows'?FLO.filter(function(f){return f.etapa<7&&mObra(f.obra)}).length:LIC.filter(function(l){return l.etapa<3&&mObra(l.obra)}).length;
     return '<button class="nv'+(CURRENT_SCREEN===n[0]?' on':'')+'" data-tab="'+n[0]+'"'+(CURRENT_SCREEN===n[0]?' aria-current="page"':'')+'>'+ic(n[2])+'<span>'+n[1]+'</span>'+(bd?'<span class="bd">'+bd+'</span>':'')+'</button>'}).join('');
   $('#titulo').textContent=TITULOS[CURRENT_SCREEN][0];$('#subtitulo').textContent=TITULOS[CURRENT_SCREEN][1];
   $('#side').classList.remove('aberto');$('#scrim').classList.remove('on');
@@ -1768,7 +1776,7 @@ window.fgrSync=SYNC;
 var SYNC_SCHEMA='app_planejamento_controle_obras';
 var SYNC_COLS={restricoes:{g:function(){return RESTRICOES},s:function(v){RESTRICOES=v}},pedidos:{g:function(){return PED},s:function(v){PED=v}},flows:{g:function(){return FLO},s:function(v){FLO=v}},contratacoes:{g:function(){return LIC},s:function(v){LIC=v}},projetos:{g:function(){return PRJ},s:function(v){PRJ=v}}};
 function syncSubst(alvo,v){if(Array.isArray(alvo)){alvo.length=0;(v||[]).forEach(function(x){alvo.push(x)})}else{Object.keys(alvo).forEach(function(k){delete alvo[k]});Object.keys(v||{}).forEach(function(k){alvo[k]=v[k]})}}
-var SYNC_CFG={prazos_prj:{g:function(){return PRAZOS_PRJ},s:function(v){syncSubst(PRAZOS_PRJ,v)}},prazos_sup:{g:function(){return PRAZOS_SUP},s:function(v){syncSubst(PRAZOS_SUP,v)}},prazos_flow:{g:function(){return PRAZOS_FLOW},s:function(v){syncSubst(PRAZOS_FLOW,v)}},
+var SYNC_CFG={prazos_prj:{g:function(){return PRAZOS_PRJ},s:function(v){syncSubst(PRAZOS_PRJ,(v&&v.length===5)?v.slice(1):v)}},prazos_sup:{g:function(){return PRAZOS_SUP},s:function(v){syncSubst(PRAZOS_SUP,v)}},prazos_flow:{g:function(){return PRAZOS_FLOW},s:function(v){syncSubst(PRAZOS_FLOW,v)}},
   cad:{g:function(){return {obras:CAD.obras,tipos:CAD.tipos}},s:function(v){['obras','tipos'].forEach(function(k){if(v&&Array.isArray(v[k]))syncSubst(CAD[k],v[k])})}}};
 /* forma "canônica" para comparar (ordem das chaves não importa; campos que começam com _ são só da tela e não vão) */
 function canon(v){
@@ -1817,10 +1825,11 @@ function syncAplica(rows,inicial){
       if(i>=0&&(inicial||canon(arr[i])===snap)){arr.splice(i,1);mudou=true;tocadas[r.colecao]=1}
       delete SYNC.snap[chave];return;
     }
-    var sv2=canon(r.value);
+    var sv2=canon(r.value),sv3=sv2;
+    if(r.colecao==='projetos'&&migraPrj(r.value))sv3=canon(r.value);   /* formato antigo: converte aqui e deixa o envio gravar a versão nova */
     if(i>=0){
       var lc2=canon(arr[i]);
-      if(lc2===sv2){SYNC.snap[chave]=sv2;return}
+      if(lc2===sv3){SYNC.snap[chave]=sv2;return}
       if(inicial||lc2===snap){arr[i]=r.value;SYNC.snap[chave]=sv2;mudou=true;tocadas[r.colecao]=1}
     }else{
       if(snap!==undefined&&!inicial)return;   /* eu apaguei este item e a exclusão ainda não foi enviada: não traz de volta */
