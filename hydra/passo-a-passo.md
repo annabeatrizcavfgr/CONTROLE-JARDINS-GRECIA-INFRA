@@ -44,7 +44,7 @@ Mudou o `public/index.html`? No GitHub Desktop: **Commit** → **Push origin**. 
 
 ## 5. O que esta versão faz e o que não faz
 
-- Os dados ficam no **navegador de cada pessoa** (`localStorage`), por endereço. Cada pessoa vê só a própria cópia; limpar o cache apaga tudo; nada é compartilhado entre coordenador, engenheiros e diretoria.
+- Os dados são **compartilhados** entre todos que entram (seção 8). Enquanto o banco não existir, ou se ele estiver fora do ar, o painel funciona em **modo local**: cada navegador com a sua cópia, e um aviso amarelo no topo avisa isso.
 - Só abre na **rede FGR (escritório ou VPN)**. De casa, sem VPN, o endereço `*.hydra` não abre.
 - Tem **login com a conta FGR** (Microsoft/Entra), veja a seção 7. A tela de login só aparece no endereço `*.hydra.fgr.com.br`.
 - As fontes vêm do Google Fonts. Se a rede da FGR bloquear, o app usa a fonte padrão do Windows e funciona do mesmo jeito.
@@ -89,3 +89,32 @@ No primeiro login, o painel pergunta **"Como você quer ser chamado(a) no painel
 
 ### Ligar e desligar o login
 No começo do trecho de login de `public/index.html` há `var LOGIN_LIGADO=true;`. Mudando para `false` e fazendo push e Redeploy, o painel abre direto, sem a tela de login.
+
+## 8. Dados compartilhados (banco do Hydra)
+
+Todo mundo que entra no painel passa a ver e editar os mesmos pedidos, flows, contratações, projetos e restrições. Cada item é uma linha numa tabela do Supabase interno (`dados.hydra.fgr.com.br`); o painel envia só o que mudou e, a cada ~8 segundos, busca o que os outros mudaram. Não precisa de variável de ambiente nem de servidor: o painel fala com o banco usando o login Microsoft de quem está usando.
+
+### Criar o banco (uma vez)
+1. `https://studio.hydra.fgr.com.br` → **SQL Editor → New query**.
+2. Cole o conteúdo inteiro de [`01-schema.sql`](01-schema.sql) e clique em **Run**. Deve terminar sem erro. (Pode rodar de novo: ele só cria o que ainda não existe.)
+3. **Espere uns 5 minutos.** A plataforma libera o schema na API sozinha depois de criado.
+4. Confira a liberação (não precisa de login; deve responder `200` e `[]`):
+
+   ```bash
+   curl -s -D - -H "apikey: <chave anon do guia>" -H "Authorization: Bearer <chave anon do guia>" \
+     -H "Accept-Profile: app_planejamento_controle_obras" \
+     "https://dados.hydra.fgr.com.br/rest/v1/docs?select=*&limit=1"
+   ```
+   `406` significa que ainda não liberou: espere mais um pouco. Se passar de 15 minutos, é caso para o TI.
+5. Só depois: `git push` e **Redeploy** no Coolify.
+
+### Como o painel se comporta
+- **Primeiro acesso, banco vazio, com dados no navegador:** o painel pergunta se envia os dados que já estavam neste navegador. Responda **OK** uma única vez (na primeira pessoa que entrar); depois os outros já entram vendo tudo.
+- **Edição ao mesmo tempo:** se duas pessoas editarem o **mesmo item** quase juntas, vale a última gravação (por item, não por campo). Itens diferentes não se atrapalham.
+- **O painel não redesenha a tela enquanto você digita** (formulário aberto, campo em edição, menu aberto). Quando você termina, as mudanças dos outros aparecem.
+- **Sem conexão:** aparece um aviso amarelo, as alterações ficam guardadas e são enviadas quando a conexão volta.
+- **Banco fora do ar na abertura:** o painel abre em **modo local**, com aviso e botão "Tentar de novo". Nesse modo o que você muda fica só no seu navegador.
+- **Excluir** marca a linha como apagada (`deleted = true`) para os outros navegadores ficarem sabendo.
+
+### Segurança, em uma frase
+A tabela só aceita contas com e-mail `@fgr.com.br`/`@fgr.com` (regras no `01-schema.sql`). Qualquer pessoa da FGR que consiga entrar no Hydra conseguiria, tecnicamente, ler e gravar nessa tabela pela API, mesmo sem usar o painel. Se um dia for preciso restringir por obra ou por papel (como no app de metas, com planejador/coordenador/visualizador), o caminho é colocar um servidor no meio, o mesmo desenho do app de metas.

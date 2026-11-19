@@ -497,21 +497,27 @@ button.b.bad{background:var(--bad);border-color:var(--bad);color:var(--surface)}
 .tema-btn{display:inline-grid;place-items:center;width:34px;height:34px;padding:0;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
 .tema-btn:hover{background:var(--line-2);color:var(--ink)}
 .tema-btn svg{width:18px;height:18px}
-.cad-wrap{display:flex;flex-direction:column;gap:12px;max-width:760px}
-.pd main:not(.wide) details.card.cad-box{padding:0}
-details.card.cad-box summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 18px;font:600 14.5px var(--sans);text-transform:none;letter-spacing:0;color:var(--ink)}
-details.card.cad-box summary::-webkit-details-marker{display:none}
-.cad-ico{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:var(--accent-soft);color:var(--accent)}
-.cad-tit{flex:1}
-.cad-qt{background:var(--line-2);color:var(--ink-2);border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600}
-.cad-chev{color:var(--muted);transition:transform .15s}
-.cad-box[open] .cad-chev{transform:rotate(180deg)}
-.cad-corpo{padding:0 18px 16px;border-top:1px solid var(--line-2)}
-.cad-corpo>.m{margin:12px 0 8px}
-.cad-list{list-style:none;margin:0;padding:0}
-.cad-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line-2);font-size:13.5px}
-.cad-row .cad-nome{flex:1}
+.cad-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;max-width:980px;align-items:start}
+.cad-box .m{margin:2px 0 14px}
+.cad-dd{position:relative}
+.cad-dd>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font-size:13.5px;color:var(--ink)}
+.cad-dd>summary::-webkit-details-marker{display:none}
+.cad-dd>summary:hover{border-color:color-mix(in srgb,var(--ink) 30%,var(--line))}
+.cad-dd[open]>summary{border-color:var(--accent)}
+.cad-dd .cad-lbl{flex:1}
+.cad-qt{color:var(--muted);font-size:12.5px}
+.cad-chev{color:var(--muted);font-size:11px;transition:transform .15s}
+.cad-dd[open] .cad-chev{transform:rotate(180deg)}
+.cad-list{list-style:none;margin:0;padding:0;position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:6;background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow-2);max-height:260px;overflow:auto}
+.cad-row{display:flex;align-items:center;gap:10px;padding:0 12px;height:36px;border-bottom:1px solid var(--line-2);font-size:13.5px}
 .cad-row:last-child{border-bottom:0}
+.cad-row:hover{background:var(--surface-2)}
+.cad-row .cad-nome{flex:1}
+.cad-add{display:flex;align-items:stretch;gap:0;height:38px;max-width:none;margin-top:10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);overflow:hidden}
+.cad-add:focus-within{border-color:var(--accent)}
+.cad-add input,.cad-add input:focus-visible{flex:1;min-width:0;border:0;border-radius:0;outline:0;box-shadow:none;background:transparent;padding:0 12px;font:13.5px var(--sans);color:var(--ink)}
+.cad-add button{border:0;border-left:1px solid var(--line);background:var(--surface-2);color:var(--accent);padding:0 16px;font:600 13px var(--sans);cursor:pointer}
+.cad-add button:hover{background:var(--accent-soft)}
 .db-cob{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
 .db-cobh{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:2px}
 .db-sub{margin:12px 0 6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -523,7 +529,7 @@ details.card.cad-box summary::-webkit-details-marker{display:none}
     <div><div class="grupo">Telas</div><nav id="nav" aria-label="Telas"></nav></div>
     <div class="side-foot">
 
-      <div class="nota">Seus dados ficam salvos só neste navegador.</div>
+      
     </div>
   </aside>
   <div class="conteudo">
@@ -843,7 +849,7 @@ function restricaoRascunhoNovo(){return {nivel:null,servico:'',data:dia(0),eng:'
 function restricaoSalvaRascunho(){
   var d=RESTRICAO_DRAFT,rs=(d.restricao||'').trim();
   if(!rs){toast('Descreva a restrição.');return}
-  RESTRICOES.push({id:'r'+(nextId++),nivel:d.nivel||null,servico:(d.servico||'').trim(),data:d.data||null,eng:(d.eng||'').trim(),coordenador:(d.coordenador||'').trim(),restricao:rs,solucao:(d.solucao||'').trim(),dataResolucao:d.dataResolucao||null,status:d.status||'aberto',g:d.g,u:d.u,t:d.t});
+  RESTRICOES.push({id:novoIdR(),nivel:d.nivel||null,servico:(d.servico||'').trim(),data:d.data||null,eng:(d.eng||'').trim(),coordenador:(d.coordenador||'').trim(),restricao:rs,solucao:(d.solucao||'').trim(),dataResolucao:d.dataResolucao||null,status:d.status||'aberto',g:d.g,u:d.u,t:d.t});
   RESTRICAO_DRAFT=null;toast('Restrição cadastrada.');renderRestricoes();
 }
 
@@ -1066,8 +1072,8 @@ var PRJ=[
  {id:'j6',n:'PAI-01',proj:'Paisagismo: áreas comuns',tip:'Condomínio 2',rev:'R00',resp:'Verde Paisagem',val:'Paulo',prometida:'',obs:'',criada:isoDe(20),etapa:1,hist:mkHist(1,9)},
  {id:'j7',n:'ESQ-02',proj:'Esquadrias: detalhamento',tip:'SB-4Q3S',rev:'R02',resp:'Alumifort',val:'Marina',prometida:'',obs:'',criada:isoDe(60),etapa:4,hist:mkHist(4,6)}];
 var DADOS_N=100;
-function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify({R:RESTRICOES,P:PED,F:FLO,L:LIC,J:PRJ,Z:PRAZOS_PRJ,Y:PRAZOS_SUP,W:PRAZOS_FLOW,C:CAD,xv:6,n:nextId,ex:EXEMPLO}))}catch(e){}}
-(function(){try{var s=JSON.parse(localStorage.getItem(STORE_KEY)||'null');if(s&&s.R){RESTRICOES=s.R;PED=s.P;FLO=s.F;LIC=s.L||[];if(s.J)PRJ=s.J;if(s.Z)PRAZOS_PRJ=s.Z;if(s.Y)PRAZOS_SUP=s.Y;if(s.W)PRAZOS_FLOW=s.W;if(s.C)['obras','tipos'].forEach(function(k){if(Array.isArray(s.C[k])){CAD[k].length=0;s.C[k].forEach(function(x){CAD[k].push(x)})}});nextId=s.n;EXEMPLO=!!s.ex;SAVED_XV=s.xv}}catch(e){}})();
+function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify({R:RESTRICOES,P:PED,F:FLO,L:LIC,J:PRJ,Z:PRAZOS_PRJ,Y:PRAZOS_SUP,W:PRAZOS_FLOW,C:CAD,xv:6,n:nextId,ex:EXEMPLO}))}catch(e){}
+  if(typeof SYNC!=='undefined'&&SYNC&&SYNC.ativo)syncAgenda();}(function(){try{var s=JSON.parse(localStorage.getItem(STORE_KEY)||'null');if(s&&s.R){RESTRICOES=s.R;PED=s.P;FLO=s.F;LIC=s.L||[];if(s.J)PRJ=s.J;if(s.Z)PRAZOS_PRJ=s.Z;if(s.Y)PRAZOS_SUP=s.Y;if(s.W)PRAZOS_FLOW=s.W;if(s.C)['obras','tipos'].forEach(function(k){if(Array.isArray(s.C[k])){CAD[k].length=0;s.C[k].forEach(function(x){CAD[k].push(x)})}});nextId=s.n;EXEMPLO=!!s.ex;SAVED_XV=s.xv}}catch(e){}})();
 /* versão de uso real: sem dados de exemplo; só existe o que a pessoa cadastrar neste navegador */
 (function(){var tem=false;try{tem=!!localStorage.getItem(STORE_KEY)}catch(e){}if(!tem){RESTRICOES=[];PED=[];FLO=[];LIC=[];PRJ=[]}EXEMPLO=false})();
 /* itens de exemplo recebem uma obra; os que a usuária cadastrou ficam sem obra até ela escolher */
@@ -1077,7 +1083,8 @@ var PZ_PADRAO={'Contratação':[30,15],'Aditivo de escopo':[15],'Aditivo de quan
 TIPOS_CONTR.forEach(function(t){if(!PRAZOS_SUP[t])PRAZOS_SUP[t]=PZ_PADRAO[t].slice();if(t!=='Contratação')PRAZOS_SUP[t]=[PRAZOS_SUP[t][0]]});
 function addDias(iso,n){var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
 function brl(v){return 'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
-function novoId(p){return p+(DADOS_N++)+'_'+Date.now().toString(36)}
+function novoId(p){return p+(DADOS_N++)+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function novoIdR(){return 'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 
 function setEtapa(x,i){x.etapa=i;Object.keys(x.hist).forEach(function(k){if(+k>i)delete x.hist[k]});for(var j=0;j<=i;j++)if(!x.hist[j])x.hist[j]=(j===i?hojeISO():(x.criada||hojeISO()))}
 
@@ -1422,10 +1429,15 @@ document.addEventListener('change',function(e){
 var CONF_LIMPAR=false;
 function avisoRender(){
   var el=$('#aviso');if(!el)return;
+  var st=(typeof SYNC!=='undefined'&&SYNC)?SYNC.estado:'local';
+  if(st==='ok'){el.style.display='none';return}
+  el.style.display='';
+  if(st==='carregando'){el.innerHTML='Carregando os dados compartilhados…';return}
+  if(st==='erro'&&SYNC.ativo){el.innerHTML='Sem conexão com os dados compartilhados. As alterações ficam guardadas e são enviadas quando a conexão voltar.';return}
+  if(st==='erro'){el.innerHTML='Não foi possível abrir os dados compartilhados. O painel está em modo local: o que você mudar fica só neste navegador. <button class="ex-link" id="aviso-recarregar">Tentar de novo</button>';var b=$('#aviso-recarregar');if(b)b.onclick=function(){location.reload()};return}
   el.innerHTML=EXEMPLO?'Os dados abaixo são de exemplo. Tudo que você incluir fica salvo só neste navegador (não é compartilhado). '+(CONF_LIMPAR?'<button class="ex-link" data-ex="ok"><b>Confirmar: apagar os exemplos</b></button> <button class="ex-link" data-ex="no">Cancelar</button>':'<button class="ex-link" data-ex="limpar">Limpar exemplos</button>')
     :'Os dados ficam salvos só neste navegador (não são compartilhados com outras pessoas ou aparelhos).';
-}
-document.addEventListener('click',function(e){
+}document.addEventListener('click',function(e){
   var b=e.target.closest('[data-ex]');if(!b)return;
   if(b.dataset.ex==='limpar')CONF_LIMPAR=true;
   else if(b.dataset.ex==='no')CONF_LIMPAR=false;
@@ -1474,12 +1486,14 @@ var CAD_DEF=[['obras','Obras / centros de custo','Ex.: JBERO','building','Usadas
   save();
   $('#main').innerHTML='<div class="cad-wrap">'+CAD_DEF.map(function(c){var k=c[0],lista=CAD[k];
     var linhas=lista.length?lista.map(function(n,i){var lock=(k==='tipos'&&n==='REGULAR');
-      return '<li class="cad-row"><span class="cad-nome">'+restricaoEsc(n)+'</span>'+(lock?'<span class="m">padrão</span>':'<button type="button" class="ic" data-cad-del="'+k+'" data-i="'+i+'" title="Remover" aria-label="Remover '+restricaoEsc(n)+'">✕</button>')+'</li>'}).join(''):'<li class="cad-row"><span class="m">Nada cadastrado.</span></li>';
-    return '<details class="card cad-box" data-cad-box="'+k+'"'+(CAD_ABERTO[k]?' open':'')+'><summary><span class="cad-ico">'+ic(c[3],18)+'</span><span class="cad-tit">'+c[1]+'</span><span class="cad-qt">'+lista.length+'</span><span class="cad-chev" aria-hidden="true">▾</span></summary>'
-     +'<div class="cad-corpo"><p class="m">'+c[4]+'</p><ul class="cad-list">'+linhas+'</ul><div class="cad-add"><input data-cad-in="'+k+'" placeholder="'+c[2]+'" autocomplete="off" aria-label="Adicionar em '+c[1]+'"><button class="b sm" data-cad-add="'+k+'">Adicionar</button></div></div></details>'}).join('')+'</div>';
+      return '<li class="cad-row"><span class="cad-nome">'+restricaoEsc(n)+'</span>'+(lock?'<span class="m" style="margin:0">padrão</span>':'<button type="button" class="ic" data-cad-del="'+k+'" data-i="'+i+'" title="Remover" aria-label="Remover '+restricaoEsc(n)+'">✕</button>')+'</li>'}).join(''):'<li class="cad-row"><span class="m" style="margin:0">Nada cadastrado.</span></li>';
+    return '<div class="card cad-box"><h2>'+c[1]+'</h2><div class="m">'+c[4]+'</div>'
+     +'<details class="cad-dd" data-cad-box="'+k+'"'+(CAD_ABERTO[k]?' open':'')+'><summary><span class="cad-lbl">Itens cadastrados</span><span class="cad-qt">'+lista.length+'</span><span class="cad-chev" aria-hidden="true">▼</span></summary><ul class="cad-list">'+linhas+'</ul></details>'
+     +'<div class="cad-add"><input data-cad-in="'+k+'" placeholder="'+c[2]+'" autocomplete="off" aria-label="Adicionar em '+c[1]+'"><button type="button" data-cad-add="'+k+'">+ Adicionar</button></div></div>'}).join('')+'</div>';
   shell();
 }
-document.addEventListener('toggle',function(e){var d=e.target;if(d&&d.dataset&&d.dataset.cadBox)CAD_ABERTO[d.dataset.cadBox]=d.open},true);function cadAdd(k){
+document.addEventListener('toggle',function(e){var d=e.target;if(d&&d.dataset&&d.dataset.cadBox)CAD_ABERTO[d.dataset.cadBox]=d.open},true);
+document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('.cad-dd'))return;[].forEach.call(document.querySelectorAll('.cad-dd[open]'),function(d){d.open=false})});function cadAdd(k){
   var inp=document.querySelector('[data-cad-in="'+k+'"]');if(!inp)return;var v=inp.value.trim();if(!v)return;
   if(k==='obras'||k==='tipos')v=v.toUpperCase();
   if(CAD[k].some(function(x){return restricaoNorm(x)===restricaoNorm(v)})){toast('Já existe na lista.');return}
@@ -1593,7 +1607,7 @@ document.addEventListener('click',function(e){
   var to=e.target.closest('[data-to]');
   if(to){var tx=to.dataset.t||'',tn=restricaoNorm(tx);
     if(RESTRICOES.some(function(r){return r.status!=='resolvido'&&restricaoNorm(r.restricao)===tn})){toast('Este item já está na Matriz GUT (em aberto).');return}
-    RESTRICOES.push({id:'r'+(nextId++),nivel:'check-in',servico:to.dataset.serv||'',data:dia(0),eng:to.dataset.eng||'',coordenador:'',restricao:tx,solucao:'',dataResolucao:null,status:'aberto',g:null,u:null,t:null});save();toast('Restrição criada na Matriz GUT, já com o responsável. Preencha G, U e T lá.');return}
+    RESTRICOES.push({id:novoIdR(),nivel:'check-in',servico:to.dataset.serv||'',data:dia(0),eng:to.dataset.eng||'',coordenador:'',restricao:tx,solucao:'',dataResolucao:null,status:'aberto',g:null,u:null,t:null});save();toast('Restrição criada na Matriz GUT, já com o responsável. Preencha G, U e T lá.');return}
   var del=e.target.closest('[data-del-restricao]');if(del){RESTRICAO_DEL=del.dataset.delRestricao;renderRestricoes();return}
   var dno=e.target.closest('[data-del-no]');if(dno){RESTRICAO_DEL=null;renderRestricoes();return}
   var dok=e.target.closest('[data-del-ok]');if(dok){var did=dok.dataset.delOk;RESTRICOES=RESTRICOES.filter(function(r){return r.id!==did});RESTRICAO_DEL=null;toast('Restrição excluída.');renderRestricoes();return}
@@ -1654,6 +1668,146 @@ window.fgrPedirNome=function(prefill,cb,obrigatorio){
   inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();salva()}else if(e.key==='Escape'&&!obrigatorio){fecha()}});
 };
 $('#burger').onclick=function(){$('#side').classList.add('aberto');$('#scrim').classList.add('on')};$('#scrim').onclick=function(){$('#side').classList.remove('aberto');$('#scrim').classList.remove('on')};
+
+/* ---------- dados compartilhados (banco do Hydra) ----------
+   Só liga depois do login (window.fgrAuth). Cada item (pedido, flow, restrição...) é uma linha na tabela docs do schema
+   abaixo. O painel envia só o que mudou e, a cada poucos segundos, busca o que os outros mudaram. Se a mesma linha for
+   editada por duas pessoas ao mesmo tempo, vale a última gravação (por item, não por campo). */
+var SYNC={ativo:false,estado:'local',snap:{},ord:{},seq:0,ultimo:'',pushando:false,denovo:false,puxando:false,pendente:false,timer:null,poll:null};
+window.fgrSync=SYNC;
+var SYNC_SCHEMA='app_planejamento_controle_obras';
+var SYNC_COLS={restricoes:{g:function(){return RESTRICOES},s:function(v){RESTRICOES=v}},pedidos:{g:function(){return PED},s:function(v){PED=v}},flows:{g:function(){return FLO},s:function(v){FLO=v}},contratacoes:{g:function(){return LIC},s:function(v){LIC=v}},projetos:{g:function(){return PRJ},s:function(v){PRJ=v}}};
+function syncSubst(alvo,v){if(Array.isArray(alvo)){alvo.length=0;(v||[]).forEach(function(x){alvo.push(x)})}else{Object.keys(alvo).forEach(function(k){delete alvo[k]});Object.keys(v||{}).forEach(function(k){alvo[k]=v[k]})}}
+var SYNC_CFG={prazos_prj:{g:function(){return PRAZOS_PRJ},s:function(v){syncSubst(PRAZOS_PRJ,v)}},prazos_sup:{g:function(){return PRAZOS_SUP},s:function(v){syncSubst(PRAZOS_SUP,v)}},prazos_flow:{g:function(){return PRAZOS_FLOW},s:function(v){syncSubst(PRAZOS_FLOW,v)}},
+  cad:{g:function(){return {obras:CAD.obras,tipos:CAD.tipos}},s:function(v){['obras','tipos'].forEach(function(k){if(v&&Array.isArray(v[k]))syncSubst(CAD[k],v[k])})}}};
+/* forma "canônica" para comparar (ordem das chaves não importa; campos que começam com _ são só da tela e não vão) */
+function canon(v){
+  if(v===null||typeof v!=='object')return JSON.stringify(v===undefined?null:v);
+  if(Array.isArray(v))return '['+v.map(canon).join(',')+']';
+  return '{'+Object.keys(v).filter(function(k){return k.charAt(0)!=='_'&&v[k]!==undefined}).sort().map(function(k){return JSON.stringify(k)+':'+canon(v[k])}).join(',')+'}';
+}
+function limpo(v){return JSON.parse(canon(v))}
+function syncReq(metodo,caminho,corpo,extra){
+  var A=window.fgrAuth;
+  return A.token().then(function(tok){
+    var h={apikey:A.anon,Authorization:'Bearer '+tok,'Accept-Profile':SYNC_SCHEMA,'Content-Profile':SYNC_SCHEMA};
+    if(corpo!==undefined)h['Content-Type']='application/json';
+    if(extra)Object.keys(extra).forEach(function(k){h[k]=extra[k]});
+    return fetch(A.url+'/rest/v1/'+caminho,{method:metodo,headers:h,body:corpo===undefined?undefined:JSON.stringify(corpo)});
+  }).then(function(r){
+    if(!r.ok){var e=new Error('http '+r.status);e.status=r.status;throw e}
+    return r.text().then(function(t){return t?JSON.parse(t):null});
+  });
+}
+function syncBuscaTudo(filtro){
+  var tudo=[],pag=1000;
+  function pagina(ini){
+    return syncReq('GET','docs?select=colecao,id,ord,value,updated_at,deleted&order=updated_at.asc,colecao.asc,id.asc'+(filtro||''),undefined,{Range:ini+'-'+(ini+pag-1),'Range-Unit':'items'}).then(function(rows){rows=rows||[];tudo=tudo.concat(rows);return rows.length===pag?pagina(ini+pag):tudo});
+  }
+  return pagina(0);
+}
+/* aplica no painel o que veio do banco; não mexe em item que tem alteração local ainda não enviada */
+function syncAplica(rows,inicial){
+  var mudou=false,tocadas={};
+  rows.forEach(function(r){
+    if(r.updated_at&&r.updated_at>SYNC.ultimo)SYNC.ultimo=r.updated_at;
+    var chave=r.colecao+'/'+r.id;
+    if(r.colecao==='config'){
+      var c=SYNC_CFG[r.id];if(!c||r.deleted)return;
+      var sv=canon(r.value),lc=canon(c.g());
+      if(sv===lc){SYNC.snap[chave]=sv;return}
+      if(inicial||lc===SYNC.snap[chave]){c.s(r.value);SYNC.snap[chave]=sv;mudou=true}
+      return;
+    }
+    var col=SYNC_COLS[r.colecao];if(!col)return;
+    SYNC.ord[chave]=Number(r.ord)||0;
+    var arr=col.g(),i=-1;for(var j=0;j<arr.length;j++){if(arr[j]&&arr[j].id===r.id){i=j;break}}
+    var snap=SYNC.snap[chave];
+    if(r.deleted){
+      if(i>=0&&(inicial||canon(arr[i])===snap)){arr.splice(i,1);mudou=true;tocadas[r.colecao]=1}
+      delete SYNC.snap[chave];return;
+    }
+    var sv2=canon(r.value);
+    if(i>=0){
+      var lc2=canon(arr[i]);
+      if(lc2===sv2){SYNC.snap[chave]=sv2;return}
+      if(inicial||lc2===snap){arr[i]=r.value;SYNC.snap[chave]=sv2;mudou=true;tocadas[r.colecao]=1}
+    }else{
+      if(snap!==undefined&&!inicial)return;   /* eu apaguei este item e a exclusão ainda não foi enviada: não traz de volta */
+      arr.push(r.value);SYNC.snap[chave]=sv2;mudou=true;tocadas[r.colecao]=1}
+  });
+  Object.keys(tocadas).forEach(function(k){SYNC_COLS[k].g().sort(function(a,b){return (SYNC.ord[k+'/'+a.id]||0)-(SYNC.ord[k+'/'+b.id]||0)})});
+  return mudou;
+}
+function syncOcupado(){
+  var a=document.activeElement;
+  return !!(document.querySelector('#restricaoMenu,#restricaoFiltroPop,#cfPop,.restricao-editing,#nome-modal,.formc')||RESTRICAO_DRAFT||(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)));
+}
+function syncRedesenha(){if(syncOcupado()){SYNC.pendente=true;return}SYNC.pendente=false;render()}
+function syncAgenda(){if(!SYNC.ativo)return;clearTimeout(SYNC.timer);SYNC.timer=setTimeout(syncEmpurra,window.FGR_PUSH_MS||400)}
+function syncEmpurra(){
+  if(!SYNC.ativo)return;
+  if(SYNC.pushando){SYNC.denovo=true;return}
+  var linhas=[],novos={},sumidos=[];
+  Object.keys(SYNC_COLS).forEach(function(k){
+    var arr=SYNC_COLS[k].g(),vistos={};
+    arr.forEach(function(it){
+      if(!it||!it.id)return;
+      var ch=k+'/'+it.id,c=canon(it);vistos[ch]=1;
+      if(SYNC.snap[ch]!==c){if(!SYNC.ord[ch])SYNC.ord[ch]=Date.now()*1000+(SYNC.seq++);linhas.push({colecao:k,id:it.id,ord:SYNC.ord[ch],value:limpo(it),deleted:false});novos[ch]=c}
+    });
+    Object.keys(SYNC.snap).forEach(function(ch){if(ch.indexOf(k+'/')===0&&!vistos[ch]){linhas.push({colecao:k,id:ch.slice(k.length+1),ord:SYNC.ord[ch]||0,value:{},deleted:true});sumidos.push(ch)}});
+  });
+  Object.keys(SYNC_CFG).forEach(function(k){
+    var ch='config/'+k,v=SYNC_CFG[k].g(),c=canon(v);
+    if(SYNC.snap[ch]!==c){linhas.push({colecao:'config',id:k,ord:0,value:limpo(v),deleted:false});novos[ch]=c}
+  });
+  if(!linhas.length)return;
+  SYNC.pushando=true;
+  syncReq('POST','docs?on_conflict=colecao,id',linhas,{Prefer:'resolution=merge-duplicates,return=minimal'}).then(function(){
+    Object.keys(novos).forEach(function(ch){SYNC.snap[ch]=novos[ch]});
+    sumidos.forEach(function(ch){delete SYNC.snap[ch]});
+    SYNC.pushando=false;
+    if(SYNC.estado==='erro'){SYNC.estado='ok';avisoRender()}
+    if(SYNC.denovo){SYNC.denovo=false;syncAgenda()}
+  }).catch(function(){
+    SYNC.pushando=false;SYNC.denovo=false;SYNC.estado='erro';avisoRender();
+    setTimeout(syncAgenda,5000);
+  });
+}
+function syncPuxa(){
+  if(!SYNC.ativo||SYNC.puxando)return;
+  if(document.hidden&&!window.FGR_SYNC_TESTE)return;
+  if(SYNC.pendente)syncRedesenha();
+  SYNC.puxando=true;
+  var desde=SYNC.ultimo?new Date(new Date(SYNC.ultimo).getTime()-5000).toISOString():'';
+  syncBuscaTudo(desde?'&updated_at=gte.'+encodeURIComponent(desde):'').then(function(rows){
+    SYNC.puxando=false;
+    if(SYNC.estado==='erro'){SYNC.estado='ok';avisoRender()}
+    if(rows.length&&syncAplica(rows,false))syncRedesenha();
+    syncAgenda();
+  }).catch(function(){SYNC.puxando=false;SYNC.estado='erro';avisoRender()});
+}
+window.fgrSyncStart=function(){
+  if(SYNC.ativo||!window.fgrAuth)return;
+  SYNC.ativo=true;SYNC.estado='carregando';avisoRender();
+  var principal=$('#main');if(principal)principal.style.visibility='hidden';
+  syncBuscaTudo('').then(function(rows){
+    var total=RESTRICOES.length+PED.length+FLO.length+LIC.length+PRJ.length,manter=false;
+    if(rows.length===0&&total>0&&!EXEMPLO)manter=window.confirm('O banco compartilhado ainda está vazio. Enviar para ele os '+total+' itens que estão neste navegador, para todos verem?');
+    if(!manter)Object.keys(SYNC_COLS).forEach(function(k){SYNC_COLS[k].s([])});
+    syncAplica(rows,true);
+    SYNC.estado='ok';
+    if(principal)principal.style.visibility='';
+    avisoRender();render();syncAgenda();
+    SYNC.poll=setInterval(syncPuxa,window.FGR_POLL_MS||8000);
+    document.addEventListener('visibilitychange',function(){if(!document.hidden)syncPuxa()});
+  }).catch(function(){
+    SYNC.ativo=false;SYNC.estado='erro';
+    if(principal)principal.style.visibility='';
+    avisoRender();
+  });
+};
 render();
 })();
 </script>
@@ -1710,11 +1864,12 @@ function definirNome(s){
     var t=(ler()||{}).access_token;
     if(t)fetch(DADOS+'/auth/v1/logout',{method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+t}}).catch(function(){});
     window.fgrSetNome('');gravar(null);el.remove();mostrar('Você saiu. Entre de novo para continuar.');
+    setTimeout(function(){location.reload()},60);
   };
 }
 function entrou(s){
   if(!PERMITIDO.test(s.email||'')){gravar(null);mostrar('A conta '+(s.email||'')+' não é uma conta FGR. Entre com o seu e-mail @fgr.com.br.');return}
-  esconder();linhaUsuario(s);definirNome(s);
+  esconder();linhaUsuario(s);definirNome(s);if(window.fgrSyncStart)window.fgrSyncStart();
 }
 function usuario(tok){
   return fetch(DADOS+'/auth/v1/user',{headers:{apikey:ANON,Authorization:'Bearer '+tok}}).then(function(r){if(!r.ok)throw new Error('sessao');return r.json()});
@@ -1743,6 +1898,12 @@ function iniciar(){
   if(s&&s.refresh_token){mostrar('Entrando…');renovar(s).then(entrou).catch(function(){gravar(null);mostrar('')});return}
   mostrar('');
 }
+function tokenValido(){
+  var s=ler();if(!s)return Promise.reject(new Error('sem sessao'));
+  if(s.expires_at>Date.now()+60000)return Promise.resolve(s.access_token);
+  return renovar(s).then(function(n){return n.access_token});
+}
+window.fgrAuth={url:DADOS,anon:ANON,token:tokenValido,email:function(){var s=ler();return s?s.email:''}};
 iniciar();
 })();
 </script>

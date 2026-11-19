@@ -7,5 +7,5 @@ Painel de controle da obra, da FGR: Dashboard, Matriz GUT, controle de pedidos, 
 - **Publicar no Hydra:** veja [hydra/passo-a-passo.md](hydra/passo-a-passo.md).
 - **Testar localmente:** abra `public/index.html` no navegador.
 - **Login:** conta FGR (Microsoft/Entra) pelo Auth do Hydra, só no endereço `*.hydra.fgr.com.br`. Passos em [hydra/passo-a-passo.md](hydra/passo-a-passo.md), seção 7.
-- **Dados:** ficam no navegador de cada pessoa (`localStorage`). Ainda não são compartilhados; o próximo passo é o banco no Hydra.
+- **Dados:** compartilhados entre todos que entram, num banco do Hydra (schema em [hydra/01-schema.sql](hydra/01-schema.sql), passos na seção 8 de [hydra/passo-a-passo.md](hydra/passo-a-passo.md)). Sem o banco, o painel abre em modo local.
 - **Cadastros:** obras e tipos de pedido se editam na tela **Cadastros**. O nome de quem usa é pedido no primeiro login.
