@@ -83,3 +83,9 @@ O painel mostra a tela "Entrar com conta Microsoft" no endereço `*.hydra.fgr.co
 Se, depois de entrar, você cair em **outro app** (o de metas, por exemplo), é porque o endereço novo não está nas Redirect URLs.
 
 Importante: nesta versão o login controla o **uso da tela**. O arquivo `index.html` continua sendo entregue pelo servidor a quem alcançar o endereço, e ele não contém dados. A proteção de verdade dos dados vem quando eles passarem para o banco, com o servidor conferindo quem está logado.
+
+### Nome de quem usa
+No primeiro login, o painel pergunta **"Como você quer ser chamado(a) no painel?"** (já vem preenchido com o nome da conta Microsoft). O nome fica guardado por e-mail, neste navegador, e é usado ao **assumir** um pedido. Dá para mudar depois em **Trocar nome**, no menu lateral. Não existe mais o campo "Meu nome" nem o cadastro de pessoas: as sugestões de responsável vêm dos nomes já usados no painel.
+
+### Ligar e desligar o login
+No começo do trecho de login de `public/index.html` há `var LOGIN_LIGADO=true;`. Mudando para `false` e fazendo push e Redeploy, o painel abre direto, sem a tela de login.
