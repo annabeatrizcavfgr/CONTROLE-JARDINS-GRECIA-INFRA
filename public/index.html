@@ -511,6 +511,17 @@ button.b.bad{background:var(--bad);border-color:var(--bad);color:var(--surface)}
 .etapa-top select{font:600 13px var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;max-width:300px}
 .etapa-top select:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
 .tab.tbl td.stg .d.man{font-style:normal;opacity:1}
+.tab.tbl.t-prj{display:inline-block;max-width:100%}
+.tab.tbl.t-prj table{width:auto}
+.tab.tbl.t-prj td.first{min-width:160px;max-width:230px}
+.tab.tbl.t-prj td:not(.stg):not(.act){padding-left:12px;padding-right:12px}
+.tab.tbl.t-prj td:nth-child(3){min-width:168px}
+.tab.tbl.t-prj th:not(.stgh){white-space:normal}
+.tab.tbl.t-prj th:not(.stgh){padding-left:12px;padding-right:12px}
+.tab.tbl.t-prj th.stgh{width:104px;min-width:104px;font-size:10px;padding:8px 4px}
+.tab.tbl.t-prj td.stg{width:104px;min-width:104px;padding-left:4px;padding-right:4px}
+.tab.tbl.t-prj td.stg .chk{width:26px;height:26px}
+.tab.tbl.t-prj td.stg .d{font-size:10.5px}
 .tema-btn{display:inline-grid;place-items:center;width:34px;height:34px;padding:0;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
 .tema-btn:hover{background:var(--line-2);color:var(--ink)}
 .tema-btn svg{width:18px;height:18px}
@@ -1247,7 +1258,7 @@ function tabelaGrupo(grupo,items){
   var ordem=G.order||(G.head.map(function(_,i){return 'c'+i}).concat(G.labels.map(function(_,i){return 's'+i})));
   function th(o){var k=+o.slice(1);if(o.charAt(0)==='s')return '<th class="stgh">'+G.labels[k]+'</th>';if(hide.indexOf(k)>=0)return '';var cfa=((UI[CURRENT_SCREEN]||{}).cf||{})[k];return G.fcol&&G.fcol[k]?'<th class=\"cf'+(cfa?' ativo':'')+'\" data-cfbtn=\"'+k+'\" title=\"Filtrar esta coluna\">'+G.head[k]+'</th>':'<th>'+G.head[k]+'</th>'}
   function td(o,x){var k=+o.slice(1);if(o.charAt(0)==='s')return stageCell(grupo,x,k);if(hide.indexOf(k)>=0)return '';var qq=(G.quick||[]).filter(function(q){return q[6]==='c'+k})[0];return '<td'+(k===0?' class="first"':'')+'>'+(qq&&!(qq[9]&&qq[9](x.raw))?qInput(grupo,qq,x):x.cols[k])+'</td>'}
-  return '<div class="tab tbl"><table><thead><tr>'+ordem.map(th).join('')+'<th></th></tr></thead><tbody>'
+  return '<div class="tab tbl t-'+grupo+'"><table><thead><tr>'+ordem.map(th).join('')+'<th></th></tr></thead><tbody>'
    +items.map(function(x){return '<tr style="--c:'+x.cor+'">'+ordem.map(function(o){return td(o,x)}).join('')+'<td class="act"><button class="b sec sm" data-act="editar" data-v="'+x.id+'">Editar</button>'+(x.gut?x.gut.replace('Levar p/ Matriz GUT','GUT'):'')+'</td></tr>'}).join('')+'</tbody></table></div>';
 }
 function uniq(a){return a.filter(function(v,i){return v&&a.indexOf(v)===i}).sort()}
