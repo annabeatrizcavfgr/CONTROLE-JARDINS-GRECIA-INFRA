@@ -1226,7 +1226,7 @@ function tPed(){return itensPedidos().map(function(b,i){var p=PED[i];
    '<span class="clamp2" title="'+restricaoEsc(p.obs||p.d)+'"><b>'+restricaoEsc(p.d)+'</b></span>'+sub('Eng. '+restricaoEsc(p.eng)+(p.tipo&&p.tipo!=='REGULAR'?' · '+chip(p.tipo,p.tipo==='EMERGENCIAL'?'bad':p.tipo==='COMPLEMENTO'?'info':'warn'):'')),restricaoEsc(p.eng),
    p.tipo&&p.tipo!=='REGULAR'?chip(p.tipo,p.tipo==='EMERGENCIAL'?'bad':p.tipo==='COMPLEMENTO'?'info':'warn'):'<span class="m">Regular</span>',
    p.resp?restricaoEsc(p.resp):'<button class="b sec sm" data-act="assumir" data-v="'+p.id+'" title="Colocar meu nome como responsável por este pedido">Assumir</button>'];return b})}
-function ondeFlow(f){return f.desvio&&f.desvio!=='Fluxo padrão'?f.desvio:ONDE_FLOW[f.etapa]}
+function ondeFlow(f){return f.desvio&&f.desvio!=='Fluxo padrão'?f.desvio:(f.etapa<0?'Orçamento':ONDE_FLOW[f.etapa])}
 /* Quando o orçamento abre o flow, o processo começa por lá: as três etapas da obra (criado, coordenador, gerente) não se aplicam. */
 function normFlow(f){
   if(!f.origem)f.origem='Obra';
@@ -1234,10 +1234,12 @@ function normFlow(f){
   if(f._dv===undefined){f._dv=f.desvio||'Fluxo padrão';if(f._dv!=='Fluxo padrão'&&!f.desvioDesde)f.desvioDesde=f.hist[f.etapa]||f.criada||hojeISO();}
   else if(f._dv!==(f.desvio||'Fluxo padrão')){f._dv=f.desvio||'Fluxo padrão';f.desvioDesde=hojeISO();}
   if(f.origem==='Orçamento'){
-    if(f.etapa<3)f.etapa=3;
+    if(f.etapa>=0&&f.etapa<3)f.etapa=-1;   /* o orçamento é quem abre, mas pode ainda não ter aberto: nenhuma etapa marcada */
     [0,1,2].forEach(function(k){delete f.hist[k]});
-    if(!f.hist[3])f.hist[3]=f.criada||hojeISO();
+    if(f.etapa>=3&&!f.hist[3])f.hist[3]=f.criada||hojeISO();
+    if(f.etapa<0)f.hist={};
   }else{
+    if(f.etapa<0)f.etapa=0;
     for(var j=0;j<=f.etapa;j++)if(!f.hist[j])f.hist[j]=f.criada||hojeISO();
   }
 }
@@ -1694,6 +1696,7 @@ document.addEventListener('click',function(e){
   else if(act==='excluir-no')u.del=null;
   else if(act==='excluir-ok'){var L=cfg.lista();var ix=L.map(function(y){return y.id}).indexOf(v);if(ix>=0)L.splice(ix,1);u.del=null;u.aberta=null;u.form=null;toast('Excluído.')}
   else if(act==='etapa'){var y=achar(a.dataset.id);if(!y)return;var alvoE=((CURRENT_SCREEN==='licglpi'||CURRENT_SCREEN==='projetos'||CURRENT_SCREEN==='medicoes')&&+v===0&&y.etapa===0)?-1:+v;
+    if(CURRENT_SCREEN==='flows'&&y.origem==='Orçamento'&&+v===3&&y.etapa===3)alvoE=-1;   /* flow aberto pelo orçamento: dá para desmarcar "Orçamento" (ainda não abriu) */
     if(alvoE===y.etapa)return;
     if(alvoE<y.etapa){confirmaVolta(a,alvoE,function(){setEtapa(y,alvoE);renderOutras()});return}
     setEtapa(y,alvoE)}
