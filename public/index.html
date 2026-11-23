@@ -1040,7 +1040,7 @@ var ICONES={list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'
 function ic(n,s){s=s||18;return '<svg class="i" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONES[n]+'</svg>'}
 var CHECK='<svg class="i" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4.5 4.5L19 7"/></svg>';
 var NAV=[['hoje','Dashboard','dash'],['restricoes','Matriz GUT','target'],['pedidos','Controle de pedidos','receipt'],['flows','Controle de flows','bolt'],['licglpi','Contratações e Aditivos','pkg'],['projetos','Validação de projetos','draft'],['cadastros','Cadastros','sliders']];
-var TITULOS={hoje:['Dashboard','Visão geral: onde estão pedidos, flows, contratações, projetos e restrições, e o que precisa de cobrança.'],cadastros:['Cadastros','Obras e tipos de pedido usados nas listas e nos formulários.'],acessos:['Acessos','Quem pode ver ou editar cada obra.'],restricoes:['Matriz GUT','Priorize as restrições por Gravidade, Urgência e Tendência.'],
+var TITULOS={hoje:['Dashboard','Visão geral: onde estão pedidos, flows, contratações, projetos e restrições, e o que precisa de cobrança.'],cadastros:['Cadastros','Obras e tipos de pedido usados nas listas e nos formulários, e quem pode acessar cada obra.'],restricoes:['Matriz GUT','Priorize as restrições por Gravidade, Urgência e Tendência.'],
  pedidos:['Controle de pedidos','Inclua cada solicitação e marque a etapa conforme o pedido avança, da lista enviada até a OC enviada ao fornecedor.'],
  flows:['Controle de flows','Aditivos do FlowMaster: marque a etapa em que cada um está. Mapeados pelo nome e pelo ID.'],
  licglpi:['Contratações e Aditivos','Solicitações de contratação e de aditivo feitas ao Suprimentos. O GLPI é a plataforma onde o chamado é aberto.'],
@@ -1088,6 +1088,8 @@ function restV(){return RESTRICOES.map(function(x,i){return Object.assign({},x,{
 /* ---------- dados: começam com exemplos; tudo é guardado só neste navegador ---------- */
 /* duas obras no mesmo painel: cada uma tem os seus próprios dados (no banco, a coluna "obra"). Trocar de obra recarrega a página. */
 var FRENTES=['INFRA','CASAS'];
+var FRENTE_NOME={INFRA:'Grécia Infra',CASAS:'Grécia Casas'};   /* nome na tela; no banco a obra continua INFRA / CASAS */
+function fNome(f){return FRENTE_NOME[f]||f}
 var FRENTE=(function(){var f=lsGet('fgr_frente','INFRA');return FRENTES.indexOf(f)>=0?f:'INFRA'})();
 var SO_VER=false;   /* acesso só para visualizar (definido depois do login) */
 var STORE_KEY='fgr_gestao_pendencias_v1'+(FRENTE==='INFRA'?'':'_'+FRENTE),EXEMPLO=false,SAVED_XV=6;
@@ -1748,8 +1750,9 @@ var CAD_DEF=[['obras','Obras / centros de custo','Ex.: JBERO','building','Usadas
       return '<li class="cad-row"><span class="cad-nome">'+restricaoEsc(n)+'</span>'+(lock?'<span class="m" style="margin:0">padrão</span>':'<button type="button" class="ic" data-cad-del="'+k+'" data-i="'+i+'" title="Remover" aria-label="Remover '+restricaoEsc(n)+'">✕</button>')+'</li>'}).join(''):'<li class="cad-row"><span class="m" style="margin:0">Nada cadastrado.</span></li>';
     return '<div class="card cad-box"><h2>'+c[1]+'</h2><div class="m">'+c[4]+'</div>'
      +'<details class="cad-dd" data-cad-box="'+k+'"'+(CAD_ABERTO[k]?' open':'')+'><summary><span class="cad-lbl">Itens cadastrados</span><span class="cad-qt">'+lista.length+'</span><span class="cad-chev" aria-hidden="true">▼</span></summary><ul class="cad-list">'+linhas+'</ul></details>'
-     +'<div class="cad-add"><input data-cad-in="'+k+'" placeholder="'+c[2]+'" autocomplete="off" aria-label="Adicionar em '+c[1]+'"><button type="button" data-cad-add="'+k+'">+ Adicionar</button></div></div>'}).join('')+'</div>';
+     +'<div class="cad-add"><input data-cad-in="'+k+'" placeholder="'+c[2]+'" autocomplete="off" aria-label="Adicionar em '+c[1]+'"><button type="button" data-cad-add="'+k+'">+ Adicionar</button></div></div>'}).join('')+(ACESSO&&ACESSO.admin&&window.fgrAuth?'<div id="acessos-box"></div>':'')+'</div>';
   shell();
+  if(ACESSO&&ACESSO.admin&&window.fgrAuth){var ab=$('#acessos-box');if(ab)ab.innerHTML='<div class="card cad-box"><h2>Quem pode acessar</h2><div class="m">Carregando os acessos…</div></div>';acessosCarrega().then(desenhaAcessos)}
 }
 document.addEventListener('toggle',function(e){var d=e.target;if(d&&d.dataset&&d.dataset.cadBox)CAD_ABERTO[d.dataset.cadBox]=d.open},true);
 document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('.cad-dd'))return;[].forEach.call(document.querySelectorAll('.cad-dd[open]'),function(d){d.open=false})});function cadAdd(k){
@@ -1858,7 +1861,7 @@ function render(){
   $('#main').className=CURRENT_SCREEN==='restricoes'?'wide':'';
   if(CURRENT_SCREEN==='restricoes')renderRestricoes();
   else{document.body.classList.remove('on-restricoes','restricao-foco');
-    if(CURRENT_SCREEN==='hoje')renderHoje();else if(CURRENT_SCREEN==='cadastros')renderCadastros();else if(CURRENT_SCREEN==='acessos')renderAcessos();else renderOutras()}
+    if(CURRENT_SCREEN==='hoje')renderHoje();else if(CURRENT_SCREEN==='cadastros')renderCadastros();else renderOutras()}
 }
 /* ---------- eventos ---------- */
 document.addEventListener('click',function(e){
@@ -1940,10 +1943,10 @@ var ACESSO=null;   /* depois do login: {admin:bool, obras:{INFRA:'ver'|'editar',
 function frenteRender(){
   var box=$('#frente-box');if(!box)return;
   var lista=ACESSO?FRENTES.filter(function(f){return ACESSO.admin||ACESSO.obras[f]}):FRENTES;
-  var tag=$('#frente-tag');if(tag)tag.textContent=FRENTE;
+  var tag=$('#frente-tag');if(tag)tag.textContent=fNome(FRENTE);
   var h='<div class="obrasel"><div class="grupo">Obra</div>';
-  if(lista.length>1)h+='<select id="frente-sel" aria-label="Obra">'+lista.map(function(f){return '<option'+(f===FRENTE?' selected':'')+'>'+f+'</option>'}).join('')+'</select>';
-  else h+='<div class="frente-um">'+FRENTE+'</div>';
+  if(lista.length>1)h+='<select id="frente-sel" aria-label="Obra">'+lista.map(function(f){return '<option value="'+f+'"'+(f===FRENTE?' selected':'')+'>'+fNome(f)+'</option>'}).join('')+'</select>';
+  else h+='<div class="frente-um">'+fNome(FRENTE)+'</div>';
   if(SO_VER)h+='<div class="nota">Você só pode visualizar esta obra.</div>';
   box.innerHTML=h+'</div>';
 }
@@ -1971,25 +1974,18 @@ function bloqueiaVer(e){
 /* tela Acessos (só quem é administradora) */
 var ACESSOS_LISTA=[],ACESSOS_ERRO='',ACESSOS_ESPERA=false;
 function acessosCarrega(){return syncReq('GET','acessos?select=email,obra,nivel&order=email.asc,obra.asc').then(function(r){ACESSOS_LISTA=r||[];ACESSOS_ERRO=''}).catch(function(e){ACESSOS_ERRO='Não consegui carregar os acessos'+((e&&e.status)?' (HTTP '+e.status+')':'')+'.'})}
-function renderAcessos(){
-  $('#main').innerHTML='<div class="cad-wrap"><div class="card cad-box"><div class="m">Carregando os acessos…</div></div></div>';
-  shell();
-  if(!window.fgrAuth){$('#main').innerHTML='<div class="cad-wrap"><div class="card cad-box"><div class="m">Os acessos só funcionam no endereço publicado (com login).</div></div></div>';return}
-  acessosCarrega().then(desenhaAcessos);
-}
-function nivelRot(n){return n==='admin'?'Administradora':n==='editar'?'Pode editar':'Só visualiza'}
 function desenhaAcessos(){
-  if(CURRENT_SCREEN!=='acessos')return;
+  var box=$('#acessos-box');if(!box||CURRENT_SCREEN!=='cadastros')return;
   var eu=String(window.fgrAuth.email()||'').toLowerCase();
   var linhas=ACESSOS_LISTA.length?ACESSOS_LISTA.map(function(r){
     var e=restricaoEsc(r.email),o=restricaoEsc(r.obra),adm=r.nivel==='admin';
-    return '<li class="cad-row ac-row"><span class="cad-nome">'+e+(String(r.email).toLowerCase()===eu?' <span class="m" style="margin:0">(você)</span>':'')+'</span><span class="m" style="margin:0;min-width:70px">'+(adm?'todas as obras':o)+'</span>'
+    return '<li class="cad-row ac-row"><span class="cad-nome">'+e+(String(r.email).toLowerCase()===eu?' <span class="m" style="margin:0">(você)</span>':'')+'</span><span class="m" style="margin:0;min-width:90px">'+(adm?'todas as obras':restricaoEsc(fNome(r.obra)))+'</span>'
      +(adm?'<span class="m" style="margin:0;min-width:110px">Administradora</span>':'<select data-ac-nivel data-e="'+e+'" data-o="'+o+'" aria-label="Nível de '+e+' em '+o+'"><option value="ver"'+(r.nivel==='ver'?' selected':'')+'>Só visualiza</option><option value="editar"'+(r.nivel==='editar'?' selected':'')+'>Pode editar</option></select>')
      +'<button type="button" class="ic" data-ac-del data-e="'+e+'" data-o="'+o+'" title="Remover acesso" aria-label="Remover acesso de '+e+'">✕</button></li>'}).join(''):'<li class="cad-row"><span class="m" style="margin:0">Ninguém cadastrado.</span></li>';
-  $('#main').innerHTML='<div class="cad-wrap"><div class="card cad-box"><h2>Quem pode acessar</h2><div class="m">Quem entra com a conta FGR e não está nesta lista não vê nenhuma obra. "Só visualiza" enxerga tudo da obra mas não altera nada. A administradora vê e altera as duas obras e mexe nesta lista.</div>'
+  box.innerHTML='<div class="card cad-box"><h2>Quem pode acessar</h2><div class="m">Quem entra com a conta FGR e não está nesta lista não vê nenhuma obra. "Só visualiza" enxerga tudo da obra mas não altera nada. A administradora vê e altera as duas obras e mexe nesta lista.</div>'
    +(ACESSOS_ERRO?'<div class="m" style="color:var(--bad)">'+restricaoEsc(ACESSOS_ERRO)+'</div>':'')
-   +'<div class="ac-form"><input id="ac-email" type="email" autocomplete="off" placeholder="nome.sobrenome@fgr.com.br" aria-label="E-mail da pessoa"><select id="ac-obra" aria-label="Obra">'+FRENTES.map(function(f){return '<option>'+f+'</option>'}).join('')+'<option value="*">'+FRENTES.join(' e ')+'</option></select><select id="ac-nivel" aria-label="Nível"><option value="ver">Só visualiza</option><option value="editar">Pode editar</option><option value="admin">Administradora (todas as obras)</option></select><button type="button" class="b" data-ac-add>+ Adicionar</button></div>'
-   +'<ul class="cad-list" style="margin-top:14px">'+linhas+'</ul></div></div>';
+   +'<div class="ac-form"><input id="ac-email" type="email" autocomplete="off" placeholder="nome.sobrenome@fgr.com.br" aria-label="E-mail da pessoa"><select id="ac-obra" aria-label="Obra">'+FRENTES.map(function(f){return '<option value="'+f+'">'+fNome(f)+'</option>'}).join('')+'<option value="*">'+FRENTES.map(fNome).join(' e ')+'</option></select><select id="ac-nivel" aria-label="Nível"><option value="ver">Só visualiza</option><option value="editar">Pode editar</option><option value="admin">Administradora (todas as obras)</option></select><button type="button" class="b" data-ac-add>+ Adicionar</button></div>'
+   +'<ul class="cad-list" style="margin-top:14px">'+linhas+'</ul></div>';
 }
 function acessosGrava(rows){return syncReq('POST','acessos?on_conflict=email,obra',rows,{Prefer:'resolution=merge-duplicates,return=minimal'}).then(function(){return acessosCarrega()}).then(desenhaAcessos).catch(function(e){toast('Não consegui salvar'+((e&&e.status)?' (HTTP '+e.status+')':'')+'.')})}
 document.addEventListener('click',function(e){
@@ -2141,7 +2137,6 @@ window.fgrSyncStart=function(){
     if(ok.indexOf(FRENTE)<0){lsSet('fgr_frente',ok[0]);location.reload();return null}
     SO_VER=!ACESSO.admin&&ACESSO.obras[FRENTE]==='ver';
     document.body.classList.toggle('so-ver',SO_VER);
-    if(ACESSO.admin&&!NAV.some(function(n){return n[0]==='acessos'}))NAV.push(['acessos','Acessos','sliders']);
     frenteRender();
     return syncBuscaTudo('');
   }).then(function(rows){

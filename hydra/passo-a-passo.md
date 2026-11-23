@@ -132,7 +132,7 @@ A tabela só aceita contas com e-mail `@fgr.com.br`/`@fgr.com` (regras no `01-sc
 
 ## 9. Duas obras (INFRA e CASAS) e acessos por obra
 
-O painel tem as obras INFRA e CASAS, cada uma com os próprios dados. Quem pode ver ou editar cada uma é definido na tela **Acessos** (só administradora).
+O painel tem as obras INFRA e CASAS, cada uma com os próprios dados. Quem pode ver ou editar cada uma é definido na tela **Cadastros**, no quadro "Quem pode acessar" (só administradora).
 
 **Ordem para publicar (importante):**
 1. No Studio (SQL Editor, New query), rode o arquivo `hydra/02-acessos.sql` inteiro. Confira antes o e-mail da administradora no fim do arquivo. Tudo o que já existe vira da obra INFRA; nada é apagado.
