@@ -399,6 +399,15 @@ button.b.bad{background:var(--bad);border-color:var(--bad);color:var(--surface)}
 .tab.tbl{overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-top:8px;max-width:100%}
 .tab.tbl table{width:100%;border-collapse:collapse;font-size:12.5px}
 .tab.tbl th{text-align:left;background:var(--surface-2);color:var(--muted);font-weight:600;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;padding:7px 8px;position:sticky;top:0;white-space:nowrap}
+.tab.tbl.t-med{display:inline-block;max-width:100%}
+.tab.tbl.t-med table{width:auto}
+.tab.tbl.t-med th:not(.stgh){white-space:normal;padding-left:8px;padding-right:8px}
+.tab.tbl.t-med td:not(.stg):not(.act){padding-left:8px;padding-right:8px;white-space:nowrap}
+.tab.tbl.t-med td:nth-child(2){white-space:normal;min-width:84px}
+.tab.tbl.t-med th.stgh{width:78px;min-width:78px;font-size:9.5px;padding:8px 2px}
+.tab.tbl.t-med td.stg{width:78px;min-width:78px;padding-left:2px;padding-right:2px}
+.tab.tbl.t-med td:nth-child(12){white-space:normal!important;min-width:110px;max-width:130px;word-break:normal}
+.tab.tbl.t-med td .cod{font:11px/1.35 var(--sans);color:var(--ink-2)}
 .tab.tbl th.stgh{text-align:center;white-space:normal;width:62px;min-width:54px;line-height:1.15;padding:7px 3px}
 .tab.tbl td{padding:5px 4px;border-top:1px solid var(--line-2);vertical-align:middle}
 .tab.tbl tbody tr:hover td{background:var(--surface-2)}
@@ -1039,12 +1048,13 @@ var ICONES={list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'
  alert:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',sliders:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>'};
 function ic(n,s){s=s||18;return '<svg class="i" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONES[n]+'</svg>'}
 var CHECK='<svg class="i" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4.5 4.5L19 7"/></svg>';
-var NAV=[['hoje','Dashboard','dash'],['restricoes','Matriz GUT','target'],['pedidos','Controle de pedidos','receipt'],['flows','Controle de flows','bolt'],['licglpi','Contratações e Aditivos','pkg'],['projetos','Validação de projetos','draft'],['cadastros','Cadastros','sliders']];
+var NAV=[['hoje','Dashboard','dash'],['restricoes','Matriz GUT','target'],['pedidos','Controle de pedidos','receipt'],['flows','Controle de flows','bolt'],['licglpi','Contratações e Aditivos','pkg'],['projetos','Validação de projetos','draft'],['medicoes','Validação de medições','building'],['cadastros','Cadastros','sliders']];
 var TITULOS={hoje:['Dashboard','Visão geral: onde estão pedidos, flows, contratações, projetos e restrições, e o que precisa de cobrança.'],cadastros:['Cadastros','Obras e tipos de pedido usados nas listas e nos formulários, e quem pode acessar cada obra.'],restricoes:['Matriz GUT','Priorize as restrições por Gravidade, Urgência e Tendência.'],
  pedidos:['Controle de pedidos','Inclua cada solicitação e marque a etapa conforme o pedido avança, da lista enviada até a OC enviada ao fornecedor.'],
  flows:['Controle de flows','Aditivos do FlowMaster: marque a etapa em que cada um está. Mapeados pelo nome e pelo ID.'],
  licglpi:['Contratações e Aditivos','Solicitações de contratação e de aditivo feitas ao Suprimentos. O GLPI é a plataforma onde o chamado é aberto.'],
- projetos:['Validação de projetos','Projetos disponibiliza, a obra valida. Veja o que está pendente com cada lado, os prazos e a previsão de entrega.']};
+ projetos:['Validação de projetos','Projetos disponibiliza, a obra valida. Veja o que está pendente com cada lado, os prazos e a previsão de entrega.'],
+ medicoes:['Validação de medições','Acompanhe cada medição, da conferência do planejamento até a assinatura: aprovação do gerente, envio ao empreiteiro e medição assinada.']};
 function ini(n){return String(n||'?').trim().split(/\s+/).map(function(p){return p[0]}).join('').slice(0,2).toUpperCase()}
 function isoDe(n){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)}
 function hojeISO(){return isoDe(0)}
@@ -1117,6 +1127,11 @@ var COM_PRJ=['obra','projetos','projetos',''];               /* com quem está o
 var PROX_PRJ=['Validar até','Retornar até','Executivo até',''];
 function proxRotPrj(e){return e<0?'Disponibilizar até':PROX_PRJ[e]}
 var PRAZOS_PRJ=[15,5,7,10];
+/* validação de medições: cada medição passa pela conferência do planejamento, pelo gerente, vai ao empreiteiro e volta assinada */
+var ETAPAS_MED=['Conferência do planejamento','Solicitado aprovação do gerente','Aprovado pelo gerente','Enviado ao empreiteiro','Medição assinada'];
+var CURTO_MED=['Conferência planejamento','Solicitado aprovação gerente','Aprovado gerente','Enviado ao empreiteiro','Medição assinada'];
+var PEND_MED='Aguardando conferência do planejamento';
+var MED=[];
 /* Etapas: nada marcado = pendente com a equipe de projetos; depois 4 etapas. Projetos gravados no formato antigo (5 etapas, a primeira
    era "Pendente com projetos") são convertidos uma vez: a antiga 0 vira "nada marcado" e as demais descem uma posição, com as mesmas datas. */
 function migraPrj(it){
@@ -1145,10 +1160,10 @@ var PRJ=[
  {id:'j6',n:'PAI-01',proj:'Paisagismo: áreas comuns',tip:'Condomínio 2',rev:'R00',resp:'Verde Paisagem',val:'Paulo',prometida:'',obs:'',criada:isoDe(20),etapa:1,hist:mkHist(1,9)},
  {id:'j7',n:'ESQ-02',proj:'Esquadrias: detalhamento',tip:'SB-4Q3S',rev:'R02',resp:'Alumifort',val:'Marina',prometida:'',obs:'',criada:isoDe(60),etapa:4,hist:mkHist(4,6)}];
 var DADOS_N=100;
-function save(){if(SO_VER)return;try{localStorage.setItem(STORE_KEY,JSON.stringify({R:RESTRICOES,P:PED,F:FLO,L:LIC,J:PRJ,Z:PRAZOS_PRJ,Y:PRAZOS_SUP,W:PRAZOS_FLOW,C:CAD,xv:6,n:nextId,ex:EXEMPLO}))}catch(e){}
-  if(typeof SYNC!=='undefined'&&SYNC&&SYNC.ativo)syncAgenda();}(function(){try{var s=JSON.parse(localStorage.getItem(STORE_KEY)||'null');if(s&&s.R){RESTRICOES=s.R;PED=s.P;FLO=s.F;LIC=s.L||[];if(s.J)PRJ=s.J;if(s.Z)PRAZOS_PRJ=s.Z;if(s.Y)PRAZOS_SUP=s.Y;if(s.W)PRAZOS_FLOW=s.W;if(s.C)['obras','tipos'].forEach(function(k){if(Array.isArray(s.C[k])){CAD[k].length=0;s.C[k].forEach(function(x){CAD[k].push(x)})}});nextId=s.n;EXEMPLO=!!s.ex;SAVED_XV=s.xv}}catch(e){}})();
+function save(){if(SO_VER)return;try{localStorage.setItem(STORE_KEY,JSON.stringify({R:RESTRICOES,P:PED,F:FLO,L:LIC,J:PRJ,M:MED,Z:PRAZOS_PRJ,Y:PRAZOS_SUP,W:PRAZOS_FLOW,C:CAD,xv:6,n:nextId,ex:EXEMPLO}))}catch(e){}
+  if(typeof SYNC!=='undefined'&&SYNC&&SYNC.ativo)syncAgenda();}(function(){try{var s=JSON.parse(localStorage.getItem(STORE_KEY)||'null');if(s&&s.R){RESTRICOES=s.R;PED=s.P;FLO=s.F;LIC=s.L||[];if(s.J)PRJ=s.J;if(s.M)MED=s.M;if(s.Z)PRAZOS_PRJ=s.Z;if(s.Y)PRAZOS_SUP=s.Y;if(s.W)PRAZOS_FLOW=s.W;if(s.C)['obras','tipos'].forEach(function(k){if(Array.isArray(s.C[k])){CAD[k].length=0;s.C[k].forEach(function(x){CAD[k].push(x)})}});nextId=s.n;EXEMPLO=!!s.ex;SAVED_XV=s.xv}}catch(e){}})();
 /* versão de uso real: sem dados de exemplo; só existe o que a pessoa cadastrar neste navegador */
-(function(){var tem=false;try{tem=!!localStorage.getItem(STORE_KEY)}catch(e){}if(!tem){RESTRICOES=[];PED=[];FLO=[];LIC=[];PRJ=[];if(FRENTE!=='INFRA')CAD.obras.length=0}EXEMPLO=false})();
+(function(){var tem=false;try{tem=!!localStorage.getItem(STORE_KEY)}catch(e){}if(!tem){RESTRICOES=[];PED=[];FLO=[];LIC=[];PRJ=[];MED=[];if(FRENTE!=='INFRA')CAD.obras.length=0}EXEMPLO=false})();
 /* itens de exemplo recebem uma obra; os que a usuária cadastrou ficam sem obra até ela escolher */
 (function(){[[PED,/^p[0-9]$/],[LIC,/^l[0-9]$/]].forEach(function(g){g[0].forEach(function(x,i){if(x.obra===undefined&&g[1].test(x.id))x.obra=CAD.obras.length?CAD.obras[i%CAD.obras.length]:''})})})();
 PRJ.forEach(migraPrj);if(PRAZOS_PRJ.length===5)PRAZOS_PRJ=PRAZOS_PRJ.slice(1);
@@ -1175,8 +1190,9 @@ var GRUPOS={
  ped:{titulo:'Pedidos',head:['Serviço','Solicitação','Eng.','Tipo','Responsável'],labels:ETAPAS_PED_CURTO},
  flo:{titulo:'Aditivos',head:['Aditivo','ID FlowMaster','Aberto por','Está em'],labels:ETAPAS_FLOW,tons:['t1','t2']},
  lic:{titulo:'Contratações e Aditivos',head:['Pacote','ID','Solicit.','Abertura GLPI','Tipo','Emerg.','Prazo','Necessidade'],labels:ETAPAS_LIC,order:['c0','c1','c2','c4','c5','c3','c6','c7','s0','s1','s2','s3']},
- prj:{titulo:'Projetos',head:['Projeto','Equipe','Responsável validação','Próxima etapa'],labels:CURTO_PRJ}};
-var GRP_ORDEM=['ped','flo','lic','prj'];
+ prj:{titulo:'Projetos',head:['Projeto','Equipe','Responsável validação','Próxima etapa'],labels:CURTO_PRJ},
+ med:{titulo:'Medições',head:['Data de solicitação','Engenheiro solicitante','Obra','Nº do contrato','Nº da medição','Valor','Código'],labels:CURTO_MED,order:['c0','c1','c2','c3','c4','c5','s0','s1','s2','s3','s4','c6']}};
+var GRP_ORDEM=['ped','flo','lic','prj','med'];
 /* campos preenchidos direto na linha, durante o acompanhamento: [chave, rótulo, tipo, dica, faltando?, opções]. "faltando" realça o campo quando a etapa já pede a informação */
 /* O último item de cada campo diz onde ele aparece: um número = embaixo do check dessa etapa; 'c1' = no lugar da coluna de informação nº 1. */
 GRUPOS.ped.quick=[['ped','Nº do pedido (UAU)','text','nº pedido',function(r){return r.etapa>=1&&!r.ped},null,1],['cot','Nº da cotação','text','nº cotação',function(r){return r.etapa>=3&&!r.cot},null,3],['oc','Nº da OC','text','nº OC',function(r){return r.etapa>=5&&!r.oc},null,5]];
@@ -1190,6 +1206,19 @@ GRUPOS.ped.fcol={0:function(x){return x.raw.serv||''},1:function(x){return x.raw
 GRUPOS.flo.fcol={0:function(x){return x.raw.n},1:function(x){return x.raw.idfm||''},2:function(x){return x.raw.origem||'Obra'},3:function(x){return x.raw.desvio||'Fluxo padrão'}};
 GRUPOS.prj.fcol={0:function(x){return x.raw.proj},1:function(x){return x.raw.resp||''},2:function(x){return x.raw.val||''},3:function(x){return proxData(x.raw)}};
 GRUPOS.prj.fdate={3:true};
+GRUPOS.med.hide=[];
+GRUPOS.med.fcol={0:function(x){return x.raw.criada||''},1:function(x){return x.raw.eng||''},2:function(x){return x.raw.obra||''},3:function(x){return x.raw.ctr||''},4:function(x){return x.raw.med||''},5:function(x){return brl(x.raw.valor)},6:function(x){return x.cod}};
+GRUPOS.med.fdate={0:true};
+/* valor digitado ou colado do Excel: "R$ 11.100,00", "9451,32", "3947.38" */
+function valorNum(t){
+  if(typeof t==='number')return t;
+  t=String(t==null?'':t).replace(/R\$|\s/g,'');if(!t)return 0;
+  if(/,/.test(t))t=t.replace(/\./g,'').replace(',','.');
+  else if(/^\d{1,3}(\.\d{3})+$/.test(t))t=t.replace(/\./g,'');
+  var n=Number(t);return isNaN(n)?0:n;
+}
+function valorCod(v){v=Number(v)||0;return Number.isInteger(v)?String(v):v.toFixed(2).replace('.',',')}
+function codMed(m){return [m.obra||'','CTR '+(m.ctr||''),'MED '+(m.med||''),'R$ '+valorCod(m.valor)].filter(function(p,i){return i>0||p}).join(' - ')}
 function sub(t){return t?'<div class="m">'+t+'</div>':''}
 function tPed(){return itensPedidos().map(function(b,i){var p=PED[i];
   b.g='ped';b.raw=p;b.estado='';b.f.resp=p.resp||'(sem responsável)';
@@ -1261,6 +1290,18 @@ function tPrj(){return PRJ.map(function(p,i){
     cols:['<b>'+restricaoEsc(p.proj)+'</b>'+sub(restricaoEsc([p.n,p.tip,p.rev].filter(Boolean).join(' · '))),
       p.resp?restricaoEsc(p.resp):'<span class="m">—</span>',p.val?restricaoEsc(p.val):'<span class="m">—</span>',
       feito?chip('Concluído','ok'):'<span class="m" style="display:block;margin-bottom:2px">'+proxRotPrj(p.etapa)+'</span><span class="qfi'+(atr?' verm':'')+'"><input type="date" class="dt" data-qf="prevprox" data-id="'+p.id+'" value="'+restricaoEsc(prox||'')+'" aria-label="Data prevista da próxima etapa" title="Data prevista da próxima etapa. Vale no lugar do prazo padrão; apague para voltar ao padrão"></span>'+sub('com '+(com==='obra'?'a obra':'a equipe de projetos')+(atr?' · atrasado':''))]};
+})}
+function tMed(){return MED.map(function(m,i){
+  if(!m.hist)m.hist={};
+  var feito=m.etapa>=4,cod=codMed(m);
+  return {id:m.id,cor:corIdx(CAD.obras.indexOf(m.obra)),g:'med',raw:m,estado:'',cod:cod,
+    sit:feito?'concluidos':'andamento',
+    f:{status:m.etapa<0?PEND_MED:ETAPAS_MED[m.etapa],eng:m.eng||'',obra:m.obra||'',ctr:m.ctr||''},
+    txt:[cod,m.eng,m.obra,m.ctr,m.med,m.obs,(m.etapa<0?PEND_MED:ETAPAS_MED[m.etapa])].join(' '),
+    gut:'',
+    cols:[m.criada?fmtDate2(m.criada):'<span class="m">—</span>',m.eng?restricaoEsc(m.eng):'<span class="m">—</span>',m.obra?restricaoEsc(m.obra):'<span class="m">—</span>',
+      '<b>'+restricaoEsc(m.ctr||'—')+'</b>','<b>'+restricaoEsc(m.med||'—')+'</b>',m.valor?restricaoEsc(brl(m.valor)):'<span class="m">—</span>',
+      '<span class="cod">'+restricaoEsc(cod)+'</span>']};
 })}
 function stageCell(grupo,x,i){
   var r=x.raw,est=r.etapa,n=GRUPOS[grupo].labels[i];
@@ -1353,6 +1394,12 @@ var CFG={
   nota:'Pendente com a equipe de projetos: ainda sem projeto, ou aguardando retorno da validação ou o executivo. Pendente com a obra: projeto disponibilizado esperando validação. Os números em itálico são as datas previstas pelos prazos padrão; clique em qualquer data para mudá-la (sem itálico, a data foi definida por você).',
   campos:[['proj','Projeto / disciplina *','text',null,'Ex.: Hidráulica: ramais e prumadas',1],['n','Código','text',null,'Ex.: HID-03'],['tip','Tipologia / área','text',null,'Ex.: SB-4Q3S'],['rev','Revisão','text',null,'Ex.: R01'],['val','Responsável pela validação','text','PESSOAS','Ex.: Viktor'],['etapa','Etapa atual','etapaN',ETAPAS_PRJ,'Pendente com a equipe de projetos'],['criada','Data da solicitação','date'],['obs','Observação','area',null,'',1]],
   vazio:function(){return {proj:'',n:'',tip:'',rev:'',resp:'',val:'',prometida:'',obs:'',etapa:-1,criada:hojeISO()}},obrig:['proj'],prefixo:'j'},
+ medicoes:{lista:function(){return MED},itens:tMed,rotulo:['medição','medições'],novo:'Nova medição',grade:true,busca:'Buscar por contrato, nº da medição, engenheiro, obra ou código',
+  seg:[['andamento','Em andamento'],['concluidos','Assinadas'],['todas','Todas']],
+  filtros:function(){return [['status','Etapa',opts2([PEND_MED].concat(ETAPAS_MED))],['eng','Engenheiro',opts2(uniq(MED.map(function(m){return m.eng})))],['obra','Obra',opts2(uniq(MED.map(function(m){return m.obra})))],['ctr','Contrato',opts2(uniq(MED.map(function(m){return m.ctr})))]]},
+  nota:'Clique no círculo para marcar a etapa; clique na data embaixo dele para ajustá-la. O código segue o padrão da planilha: obra, contrato, medição e valor.',
+  campos:[['criada','Data da solicitação','date'],['eng','Engenheiro solicitante','text','PESSOAS','Ex.: Erlan'],['obra','Obra','obra'],['ctr','Nº do contrato *','text',null,'Ex.: 349'],['med','Nº da medição *','text',null,'Ex.: 27'],['valor','Valor (R$)','number',null,'Ex.: 11100.00'],['etapa','Etapa atual','etapaN',ETAPAS_MED,PEND_MED],['obs','Observação','area',null,'',1]],
+  vazio:function(){return {criada:hojeISO(),eng:'',obra:obraPad(),ctr:'',med:'',valor:0,obs:'',etapa:-1}},obrig:['ctr','med'],prefixo:'m'},
  licglpi:{lista:function(){return LIC},itens:tLic,rotulo:['solicitação','solicitações'],novo:'Nova solicitação',grade:true,busca:'Buscar por pacote, nº do GLPI, pedido de serviço ou solicitante',
   extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button>'},
   seg:[['andamento','Em andamento'],['concluidas','Contrato aprovado'],['todas','Todas']],
@@ -1361,10 +1408,10 @@ var CFG={
   campos:[['serv','Pacote *','text','PACOTES','Ex.: HIDRÁULICA'],['obra','Obra','obra'],['sol','Solicitante','text','PESSOAS','Ex.: Viktor'],['tipo','Tipo de contratação','select',TIPOS_CONTR],['emerg','Emergencial? (só para contratação)','select',['Não','Sim']],['necessidade','Data de necessidade *','date'],['abertura','Data de abertura do GLPI','date'],['prazo','Prazo (deixe em branco para usar o prazo padrão)','date'],['idglpi','Nº do GLPI','text',null,'Ex.: 4830'],['pedserv','Nº do pedido de serviço','text',null,'Ex.: PS-120'],['etapa','Etapa atual','etapaN',ETAPAS_LIC]],
   vazio:function(){return {serv:'',obra:obraPad(),sol:'',tipo:'Contratação',emerg:'Não',necessidade:'',abertura:'',prazo:'',idglpi:'',pedserv:'',etapa:-1,criada:hojeISO(),v:2}},obrig:['serv','necessidade'],prefixo:'l'}
 };
-var UI={};['pedidos','flows','licglpi','projetos'].forEach(function(k){UI[k]={seg:CFG[k].seg[0][0],busca:'',aberto:false,f:{},aberta:null,form:null,del:null}});
+var UI={};['pedidos','flows','licglpi','projetos','medicoes'].forEach(function(k){UI[k]={seg:CFG[k].seg[0][0],busca:'',aberto:false,f:{},aberta:null,form:null,del:null}});
 UI.projetos.agrupar=!!lsGet('fgr_prj_agrupar',false);UI.projetos.grpFechado={};
 /* filtro por coluna (clicar no título da coluna): lista de valores com caixas de seleção */
-var SCREEN_G={pedidos:'ped',flows:'flo',licglpi:'lic',projetos:'prj'};
+var SCREEN_G={pedidos:'ped',flows:'flo',licglpi:'lic',projetos:'prj',medicoes:'med'};
 function cfRot(G,i,v){return v===''?'(vazio)':(G.fdate&&G.fdate[i])?fmtDate2(v):v}
 function cfChipsHtml(k){
   var u=UI[k],cf=u.cf||{},ks=Object.keys(cf);if(!ks.length)return '';var G=GRUPOS[SCREEN_G[k]];
@@ -1405,7 +1452,7 @@ document.addEventListener('click',function(e){
   abreCF(th,th.dataset.cfbtn);
 });
 function filtrar(k,ign){
-  var cfg=CFG[k],u=UI[k],q=u.busca.trim().toLowerCase(),all=cfg.itens().filter(function(x){return x.g==='prj'||mObra(x.raw.obra)});
+  var cfg=CFG[k],u=UI[k],q=u.busca.trim().toLowerCase(),all=cfg.itens().filter(function(x){return x.g==='prj'||x.g==='med'||mObra(x.raw.obra)});
   var cont={};cfg.seg.forEach(function(s){cont[s[0]]=s[0]==='todas'?all.length:all.filter(function(x){return x.sit===s[0]||x.sit2===s[0]}).length});
   var res=all.filter(function(x){
     if(u.seg!=='todas'&&x.sit!==u.seg&&x.sit2!==u.seg)return false;
@@ -1498,6 +1545,10 @@ var GRADES={
     cols:[{k:'n',l:'Aditivo *',w:'26%'},{k:'idfm',l:'ID no FlowMaster',w:'9%'},{k:'origem',l:'Aberto por',w:'10%',t:'sel',op:['Obra','Orçamento'],def:'Obra'},{k:'obra',l:'Obra',w:'11%',t:'sel',op:function(){return ['']['concat'](CAD.obras)},vr:'(sem obra)'},{k:'sol',l:'Solicitante',w:'13%',lista:'dl-pessoas'},{k:'motivo',l:'Motivo',w:'18%',t:'sel',op:function(){return MOTIVOS_FLOW},def:'Não informado'},{k:'desvio',l:'Está em',w:'13%',t:'sel',op:['Fluxo padrão','Projetos','Suprimentos'],def:'Fluxo padrão'}],
     faltam:function(r){var e={};if(!String(r.n).trim())e.n=1;return e},
     cria:function(r,h){return {id:novoId('f'),n:String(r.n).trim(),idfm:String(r.idfm).trim(),origem:r.origem||'Obra',obra:r.obra||'',sol:String(r.sol).trim(),motivo:r.motivo||'Não informado',desvio:r.desvio||'Fluxo padrão',criada:h,etapa:0,hist:{0:h},v:2}}},
+  medicoes:{botao:'Adicionar medições',titulo:'Adicionar medições',rot:'medição(ões)',dica:'<b>Nº do contrato</b> e <b>Nº da medição</b> são obrigatórios; o valor aceita "R$ 11.100,00" ou 11100,00. Dá para colar direto da planilha de medições',
+    cols:[{k:'criada',l:'Data de solicitação',w:'14%',t:'data'},{k:'eng',l:'Engenheiro solicitante',w:'18%',lista:'dl-pessoas'},{k:'obra',l:'Obra',w:'12%',t:'sel',op:function(){return ['']['concat'](CAD.obras)},vr:'(sem obra)'},{k:'ctr',l:'Nº do contrato *',w:'16%'},{k:'med',l:'Nº da medição *',w:'16%'},{k:'valor',l:'Valor (R$)',w:'16%'}],
+    faltam:function(r){var e={};if(!String(r.ctr).trim())e.ctr=1;if(!String(r.med).trim())e.med=1;return e},
+    cria:function(r,h){return {id:novoId('m'),criada:gradeData(r.criada)||h,eng:String(r.eng).trim(),obra:r.obra||'',ctr:String(r.ctr).trim(),med:String(r.med).trim(),valor:valorNum(r.valor),obs:'',etapa:-1,hist:{},v:2}}},
   licglpi:{botao:'Adicionar solicitações',titulo:'Adicionar solicitações (contratações e aditivos)',rot:'solicitação(ões)',dica:'<b>Pacote</b> e <b>Data de necessidade</b> são obrigatórios; se informar o GLPI ou a abertura, a etapa "Abertura de GLPI" já fica marcada',
     cols:[{k:'serv',l:'Pacote *',w:'17%',lista:'dl-pacotes'},{k:'obra',l:'Obra',w:'11%',t:'sel',op:function(){return ['']['concat'](CAD.obras)},vr:'(sem obra)'},{k:'sol',l:'Solicitante',w:'11%',lista:'dl-pessoas'},{k:'tipo',l:'Tipo',w:'13%',t:'sel',op:function(){return TIPOS_CONTR},def:'Contratação'},{k:'emerg',l:'Emergencial?',w:'9%',t:'sel',op:['Não','Sim'],def:'Não'},{k:'necessidade',l:'Data de necessidade *',w:'11%',t:'data'},{k:'abertura',l:'Abertura do GLPI',w:'11%',t:'data'},{k:'idglpi',l:'Nº do GLPI',w:'8%'},{k:'pedserv',l:'Nº pedido de serviço',w:'10%'}],
     faltam:function(r){var e={};if(!String(r.serv).trim())e.serv=1;if(!gradeData(r.necessidade))e.necessidade=1;return e},
@@ -1642,7 +1693,7 @@ document.addEventListener('click',function(e){
   else if(act==='excluir')u.del=v;
   else if(act==='excluir-no')u.del=null;
   else if(act==='excluir-ok'){var L=cfg.lista();var ix=L.map(function(y){return y.id}).indexOf(v);if(ix>=0)L.splice(ix,1);u.del=null;u.aberta=null;u.form=null;toast('Excluído.')}
-  else if(act==='etapa'){var y=achar(a.dataset.id);if(!y)return;var alvoE=((CURRENT_SCREEN==='licglpi'||CURRENT_SCREEN==='projetos')&&+v===0&&y.etapa===0)?-1:+v;
+  else if(act==='etapa'){var y=achar(a.dataset.id);if(!y)return;var alvoE=((CURRENT_SCREEN==='licglpi'||CURRENT_SCREEN==='projetos'||CURRENT_SCREEN==='medicoes')&&+v===0&&y.etapa===0)?-1:+v;
     if(alvoE===y.etapa)return;
     if(alvoE<y.etapa){confirmaVolta(a,alvoE,function(){setEtapa(y,alvoE);renderOutras()});return}
     setEtapa(y,alvoE)}
@@ -1689,14 +1740,14 @@ function avisoRender(){
   var b=e.target.closest('[data-ex]');if(!b)return;
   if(b.dataset.ex==='limpar')CONF_LIMPAR=true;
   else if(b.dataset.ex==='no')CONF_LIMPAR=false;
-  else{RESTRICOES=[];PED=[];FLO=[];LIC=[];PRJ=[];EXEMPLO=false;CONF_LIMPAR=false;RESTRICAO_FILTROS={};save();toast('Exemplos apagados.');render();return}
+  else{RESTRICOES=[];PED=[];FLO=[];LIC=[];PRJ=[];MED=[];EXEMPLO=false;CONF_LIMPAR=false;RESTRICAO_FILTROS={};save();toast('Exemplos apagados.');render();return}
   avisoRender();
 });
 /* ---------- obra (menu lateral) e listas de sugestão ---------- */
 /* sugestões nos campos de texto: vêm do que já foi digitado no painel (não há cadastro de pessoas nem de pacotes) */
 function nomesUsados(){
   var m={};function add(n){n=String(n==null?'':n).trim();if(n)m[n.toLowerCase()]=n}
-  PED.forEach(function(p){add(p.eng);add(p.resp)});FLO.forEach(function(f){add(f.sol)});LIC.forEach(function(l){add(l.sol)});PRJ.forEach(function(p){add(p.val)});
+  PED.forEach(function(p){add(p.eng);add(p.resp)});FLO.forEach(function(f){add(f.sol)});LIC.forEach(function(l){add(l.sol)});PRJ.forEach(function(p){add(p.val)});MED.forEach(function(m){add(m.eng)});
   RESTRICOES.forEach(function(r){String(r.eng||'').split(/\s*[\/,;&]\s*|\s+e\s+/i).forEach(add);add(r.coordenador)});
   if(window.fgrNomeAtual)add(window.fgrNomeAtual());
   return Object.keys(m).map(function(k){return m[k]}).sort(function(a,b){return a.localeCompare(b,'pt')});
@@ -1850,7 +1901,7 @@ function renderHoje(){
    +'<div class="m">Para cobrar: pedidos que ainda não têm responsável; flows com o prazo da área vencido; contratações com prazo vencido antes de "Contratação concluída"; projetos com prazo ou previsão de entrega vencidos; restrições da Matriz GUT em aberto com prazo vencido.</div>';
 }function shell(){
   document.getElementById('nav').innerHTML=NAV.map(function(n){
-    var bd=n[0]==='hoje'?hojeDados().total:(n[0]==='cadastros'||n[0]==='acessos')?0:n[0]==='restricoes'?RESTRICOES.filter(function(r){return r.status!=='resolvido'}).length:n[0]==='pedidos'?PED.filter(function(p){return p.etapa<6&&mObra(p.obra)}).length:n[0]==='projetos'?PRJ.filter(function(p){return p.etapa<3}).length:n[0]==='flows'?FLO.filter(function(f){return f.etapa<7&&mObra(f.obra)}).length:LIC.filter(function(l){return l.etapa<3&&mObra(l.obra)}).length;
+    var bd=n[0]==='hoje'?hojeDados().total:(n[0]==='cadastros'||n[0]==='acessos')?0:n[0]==='restricoes'?RESTRICOES.filter(function(r){return r.status!=='resolvido'}).length:n[0]==='pedidos'?PED.filter(function(p){return p.etapa<6&&mObra(p.obra)}).length:n[0]==='projetos'?PRJ.filter(function(p){return p.etapa<3}).length:n[0]==='medicoes'?MED.filter(function(m){return m.etapa<4}).length:n[0]==='flows'?FLO.filter(function(f){return f.etapa<7&&mObra(f.obra)}).length:LIC.filter(function(l){return l.etapa<3&&mObra(l.obra)}).length;
     return '<button class="nv'+(CURRENT_SCREEN===n[0]?' on':'')+'" data-tab="'+n[0]+'"'+(CURRENT_SCREEN===n[0]?' aria-current="page"':'')+'>'+ic(n[2])+'<span>'+n[1]+'</span>'+(bd?'<span class="bd">'+bd+'</span>':'')+'</button>'}).join('');
   $('#titulo').textContent=TITULOS[CURRENT_SCREEN][0];$('#subtitulo').textContent=TITULOS[CURRENT_SCREEN][1];
   $('#side').classList.remove('aberto');$('#scrim').classList.remove('on');
@@ -2004,7 +2055,7 @@ document.addEventListener('change',function(e){
   var s=e.target.closest&&e.target.closest('select[data-ac-nivel]');if(!s)return;
   acessosGrava([{email:s.dataset.e,obra:s.dataset.o,nivel:s.value}]);
 });
-var SYNC_COLS={restricoes:{g:function(){return RESTRICOES},s:function(v){RESTRICOES=v}},pedidos:{g:function(){return PED},s:function(v){PED=v}},flows:{g:function(){return FLO},s:function(v){FLO=v}},contratacoes:{g:function(){return LIC},s:function(v){LIC=v}},projetos:{g:function(){return PRJ},s:function(v){PRJ=v}}};
+var SYNC_COLS={restricoes:{g:function(){return RESTRICOES},s:function(v){RESTRICOES=v}},pedidos:{g:function(){return PED},s:function(v){PED=v}},flows:{g:function(){return FLO},s:function(v){FLO=v}},contratacoes:{g:function(){return LIC},s:function(v){LIC=v}},projetos:{g:function(){return PRJ},s:function(v){PRJ=v}},medicoes:{g:function(){return MED},s:function(v){MED=v}}};
 /* a chave do banco é (colecao, id) para o painel todo; por isso as configurações da obra CASAS ganham o sufixo @CASAS */
 function cfgId(k){return FRENTE==='INFRA'?k:k+'@'+FRENTE}
 function syncSubst(alvo,v){if(Array.isArray(alvo)){alvo.length=0;(v||[]).forEach(function(x){alvo.push(x)})}else{Object.keys(alvo).forEach(function(k){delete alvo[k]});Object.keys(v||{}).forEach(function(k){alvo[k]=v[k]})}}
@@ -2141,7 +2192,7 @@ window.fgrSyncStart=function(){
     return syncBuscaTudo('');
   }).then(function(rows){
     if(rows===null)return;
-    var total=RESTRICOES.length+PED.length+FLO.length+LIC.length+PRJ.length,manter=false;
+    var total=RESTRICOES.length+PED.length+FLO.length+LIC.length+PRJ.length+MED.length,manter=false;
     if(rows.length===0&&total>0&&!EXEMPLO&&!SO_VER)manter=window.confirm('O banco compartilhado ainda está vazio. Enviar para ele os '+total+' itens que estão neste navegador, para todos verem?');
     if(!manter)Object.keys(SYNC_COLS).forEach(function(k){SYNC_COLS[k].s([])});
     syncAplica(rows,true);
