@@ -350,7 +350,7 @@ body.restricao-foco .restricao-wrap{max-height:calc(100vh - 112px) !important}
 .seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
 .seg button{background:none;border:0;border-radius:7px;padding:5px 11px;font:600 12.5px var(--sans);color:var(--muted);cursor:pointer}
 .seg button.on{background:var(--accent);color:var(--accent-ink)}
-.busca{position:relative;flex:1 1 240px;min-width:200px;display:flex;align-items:center}
+.busca{position:relative;flex:1 1 220px;min-width:150px;display:flex;align-items:center}
 .busca svg{position:absolute;left:10px;color:var(--muted);pointer-events:none}
 .pd .busca input,.pd .filtros select{width:100%;font:13px var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 11px;transition:border-color .12s,box-shadow .12s}
 .pd .busca input{padding-left:32px}
@@ -508,7 +508,7 @@ button.b.bad{background:var(--bad);border-color:var(--bad);color:var(--surface)}
 .grade-tab select:focus{outline:2px solid var(--accent);outline-offset:-2px;background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
 .grade-tab select.bad{background:color-mix(in srgb,var(--bad) 12%,var(--surface));color:var(--bad)}
 .etapa-top{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--muted)}
-.etapa-top select{font:600 13px var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;max-width:300px}
+.etapa-top select{font:600 13px var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;max-width:215px}
 .etapa-top select:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
 .tab.tbl td.stg .d.man{font-style:normal;opacity:1}
 .tab.tbl.t-prj{display:inline-block;max-width:100%}
@@ -517,6 +517,15 @@ button.b.bad{background:var(--bad);border-color:var(--bad);color:var(--surface)}
 .tab.tbl.t-prj td:not(.stg):not(.act){padding-left:12px;padding-right:12px}
 .tab.tbl.t-prj td:nth-child(3){min-width:168px}
 .tab.tbl.t-prj th:not(.stgh){white-space:normal}
+.tab.tbl tr.grp-h td{background:var(--surface-2);border-top:1px solid var(--line)}
+.tab.tbl tr.grp-h td.first b{font-size:13px}
+.grp-cv{border:0;background:none;cursor:pointer;color:var(--muted);font-size:10px;padding:0 8px 0 0;transition:transform .12s}
+.grp-cv.fechado{transform:rotate(-90deg)}
+.tab.tbl tr.grp-f td.first{padding-left:38px}
+.tab.tbl td.grp-s{font-size:12px;font-weight:600;color:var(--ink-2);text-align:center;vertical-align:middle}
+.tab.tbl td.grp-s.ok{color:var(--ok)}
+.tab.tbl td.grp-s svg{display:inline-block;vertical-align:middle}
+button.b.sec.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .tab.tbl.t-prj th:not(.stgh){padding-left:12px;padding-right:12px}
 .tab.tbl.t-prj th.stgh{width:104px;min-width:104px;font-size:10px;padding:8px 4px}
 .tab.tbl.t-prj td.stg{width:104px;min-width:104px;padding-left:4px;padding-right:4px}
@@ -1253,13 +1262,54 @@ function qInput(grupo,q,x){
   return '<span class="qfi'+(falta?' falta':'')+(verm?' verm':'')+'">'+inp+'</span>';
 }
 function quickAt(grupo,x,i){return (GRUPOS[grupo].quick||[]).filter(function(q){return q[6]===i}).map(function(q){return qInput(grupo,q,x)}).join('')}
+/* ---------- projetos: agrupar por disciplina (opcional), com uma linha-resumo por grupo ----------
+   Projetos de mesmo nome (a disciplina, por exemplo "Contenção") viram um grupo quando há 2 ou mais; cada local (código) é uma linha do grupo. */
+function linhaItem(x,ordem,td,filho){
+  return '<tr'+(filho?' class="grp-f"':'')+' style="--c:'+x.cor+'">'+ordem.map(function(o){return td(o,x)}).join('')+'<td class="act"><button class="b sec sm" data-act="editar" data-v="'+x.id+'">Editar</button>'+(x.gut?x.gut.replace('Levar p/ Matriz GUT','GUT'):'')+'</td></tr>';
+}
+function grupoResumoHtml(g,ordem,fechado){
+  var its=g.itens,N=its.length,hoje=hojeISO();
+  var vals=uniq(its.map(function(x){return String(x.raw.val||'').trim()}));
+  var datas=[],atras=0,abertos=0;
+  its.forEach(function(x){var r=x.raw;if(r.etapa<3){abertos++;var d=proxData(r);if(d){datas.push(d);if(d<hoje)atras++}}});
+  datas.sort();
+  var prox=!abertos?chip('Concluídos','ok'):'<span class="m" style="display:block;margin-bottom:2px">Data mais próxima</span><b>'+(datas[0]?fmtDate2(datas[0]):'—')+'</b>'+(atras?' '+chip(atras+(atras>1?' atrasados':' atrasado'),'bad'):'')+sub(abertos+' de '+N+' em andamento');
+  return '<tr class="grp-h" style="--c:'+its[0].cor+'">'+ordem.map(function(o){
+    var k=+o.slice(1);
+    if(o.charAt(0)==='s'){var feitos=its.filter(function(x){return x.raw.etapa>=k}).length;return '<td class="stg grp-s'+(feitos===N?' ok':'')+'" title="'+feitos+' de '+N+' com esta etapa concluída">'+(feitos===N?CHECK:feitos+'/'+N)+'</td>'}
+    if(GRUPOS.prj.hide.indexOf(k)>=0)return '';
+    if(k===0)return '<td class="first"><button type="button" class="grp-cv'+(fechado?' fechado':'')+'" data-act="grupo" data-v="'+restricaoEsc(g.chave)+'" aria-expanded="'+!fechado+'" aria-label="'+(fechado?'Expandir ':'Recolher ')+restricaoEsc(g.nome)+'">▼</button><b>'+restricaoEsc(g.nome)+'</b>'+sub(N+' locais')+'</td>';
+    if(k===2)return '<td>'+(vals.length?'<span class="m">'+restricaoEsc(vals.join(', '))+'</span>':'<span class="m">—</span>')+'</td>';
+    if(k===3)return '<td>'+prox+'</td>';
+    return '<td></td>';
+  }).join('')+'<td class="act"></td></tr>';
+}
+function linhasTabela(grupo,items,ordem,td){
+  if(grupo!=='prj'||!UI.projetos.agrupar)return items.map(function(x){return linhaItem(x,ordem,td,false)}).join('');
+  var gr=[],mapa={};
+  items.forEach(function(x){
+    var ch=restricaoNorm(String(x.raw.proj||'').trim());
+    if(!mapa[ch]){mapa[ch]={chave:ch,nome:String(x.raw.proj||'').trim()||'(sem nome)',itens:[]};gr.push(mapa[ch])}
+    mapa[ch].itens.push(x);
+  });
+  var fe=UI.projetos.grpFechado||{};
+  return gr.map(function(g){
+    if(g.itens.length<2)return linhaItem(g.itens[0],ordem,td,false);
+    var fechado=!!fe[g.chave];
+    return grupoResumoHtml(g,ordem,fechado)+(fechado?'':g.itens.map(function(x){
+      var p=x.raw,y=Object.assign({},x,{cols:x.cols.slice()});
+      y.cols[0]='<b>'+restricaoEsc(String(p.n||'').trim()||'(sem código)')+'</b>'+sub(restricaoEsc([p.tip,p.rev].filter(Boolean).join(' · ')));
+      return linhaItem(y,ordem,td,true);
+    }).join(''));
+  }).join('');
+}
 function tabelaGrupo(grupo,items){
   var G=GRUPOS[grupo],hide=G.hide||[];
   var ordem=G.order||(G.head.map(function(_,i){return 'c'+i}).concat(G.labels.map(function(_,i){return 's'+i})));
   function th(o){var k=+o.slice(1);if(o.charAt(0)==='s')return '<th class="stgh">'+G.labels[k]+'</th>';if(hide.indexOf(k)>=0)return '';var cfa=((UI[CURRENT_SCREEN]||{}).cf||{})[k];return G.fcol&&G.fcol[k]?'<th class=\"cf'+(cfa?' ativo':'')+'\" data-cfbtn=\"'+k+'\" title=\"Filtrar esta coluna\">'+G.head[k]+'</th>':'<th>'+G.head[k]+'</th>'}
   function td(o,x){var k=+o.slice(1);if(o.charAt(0)==='s')return stageCell(grupo,x,k);if(hide.indexOf(k)>=0)return '';var qq=(G.quick||[]).filter(function(q){return q[6]==='c'+k})[0];return '<td'+(k===0?' class="first"':'')+'>'+(qq&&!(qq[9]&&qq[9](x.raw))?qInput(grupo,qq,x):x.cols[k])+'</td>'}
   return '<div class="tab tbl t-'+grupo+'"><table><thead><tr>'+ordem.map(th).join('')+'<th></th></tr></thead><tbody>'
-   +items.map(function(x){return '<tr style="--c:'+x.cor+'">'+ordem.map(function(o){return td(o,x)}).join('')+'<td class="act"><button class="b sec sm" data-act="editar" data-v="'+x.id+'">Editar</button>'+(x.gut?x.gut.replace('Levar p/ Matriz GUT','GUT'):'')+'</td></tr>'}).join('')+'</tbody></table></div>';
+   +linhasTabela(grupo,items,ordem,td)+'</tbody></table></div>';
 }
 function uniq(a){return a.filter(function(v,i){return v&&a.indexOf(v)===i}).sort()}
 function opts2(a){return a.map(function(v){return [v,v]})}
@@ -1280,7 +1330,7 @@ var CFG={
   vazio:function(){return {n:'',idfm:'',origem:'Obra',obra:obraPad(),sol:'',motivo:'Não informado',desvio:'Fluxo padrão',etapa:0,criada:hojeISO()}},obrig:['n'],prefixo:'f'},
  projetos:{lista:function(){return PRJ},itens:tPrj,rotulo:['projeto','projetos'],novo:'Novo projeto',grade:true,busca:'Buscar por projeto, código, tipologia ou responsável pela validação',
   seg:[['todas','Todos']],etapaTopo:true,
-  extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button>'},
+  extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button><button class="b sec sm'+(u.agrupar?' on':'')+'" data-act="agrupar" aria-pressed="'+!!u.agrupar+'" title="Junta os projetos de mesma disciplina (mesmo nome) num grupo, com um resumo">Agrupar por disciplina</button>'},
   filtros:function(){return [['status','Etapa',opts2(['Pendente com a equipe de projetos'].concat(ETAPAS_PRJ))],['val','Responsável validação',opts2(uniq(PRJ.map(function(p){return p.val})))],['tip','Tipologia / área',opts2(uniq(PRJ.map(function(p){return p.tip})))]]},
   nota:'Pendente com a equipe de projetos: ainda sem projeto, ou aguardando retorno da validação ou o executivo. Pendente com a obra: projeto disponibilizado esperando validação. Os números em itálico são as datas previstas pelos prazos padrão; clique em qualquer data para mudá-la (sem itálico, a data foi definida por você).',
   campos:[['proj','Projeto / disciplina *','text',null,'Ex.: Hidráulica: ramais e prumadas',1],['n','Código','text',null,'Ex.: HID-03'],['tip','Tipologia / área','text',null,'Ex.: SB-4Q3S'],['rev','Revisão','text',null,'Ex.: R01'],['val','Responsável pela validação','text','PESSOAS','Ex.: Viktor'],['etapa','Etapa atual','etapaN',ETAPAS_PRJ,'Pendente com a equipe de projetos'],['criada','Data da solicitação','date'],['obs','Observação','area',null,'',1]],
@@ -1294,6 +1344,7 @@ var CFG={
   vazio:function(){return {serv:'',obra:obraPad(),sol:'',tipo:'Contratação',emerg:'Não',necessidade:'',abertura:'',prazo:'',idglpi:'',pedserv:'',etapa:-1,criada:hojeISO(),v:2}},obrig:['serv','necessidade'],prefixo:'l'}
 };
 var UI={};['pedidos','flows','licglpi','projetos'].forEach(function(k){UI[k]={seg:CFG[k].seg[0][0],busca:'',aberto:false,f:{},aberta:null,form:null,del:null}});
+UI.projetos.agrupar=!!lsGet('fgr_prj_agrupar',false);UI.projetos.grpFechado={};
 /* filtro por coluna (clicar no título da coluna): lista de valores com caixas de seleção */
 var SCREEN_G={pedidos:'ped',flows:'flo',licglpi:'lic',projetos:'prj'};
 function cfRot(G,i,v){return v===''?'(vazio)':(G.fdate&&G.fdate[i])?fmtDate2(v):v}
@@ -1554,6 +1605,8 @@ document.addEventListener('click',function(e){
   else if(act==='grade-linha')GRADE_ST[k].push(gradeVazia(k,1)[0]);
   else if(act==='grade-limpar')GRADE_ST[k]=gradeVazia(k,5);
   else if(act==='grade-salvar'){if(!gradeSalva(u,k)){renderOutras();return}}
+  else if(act==='agrupar'){u.agrupar=!u.agrupar;lsSet('fgr_prj_agrupar',u.agrupar)}
+  else if(act==='grupo'){u.grpFechado=u.grpFechado||{};u.grpFechado[v]=!u.grpFechado[v]}
   else if(act==='pz')u.pz=!u.pz;
   else if(act==='salvar-prazos-flow'){['orc','obra','plan','proj','sup'].forEach(function(k){var el=document.getElementById('pzf-'+k);if(el)PRAZOS_FLOW[k]=Math.max(0,Number(el.value)||0)});u.pz=false;toast('Prazos padrão salvos.')}
   else if(act==='salvar-prazos-sup'){TIPOS_CONTR.forEach(function(t,i){[0,1].forEach(function(j){var el=document.getElementById('pzs-'+i+'-'+j);if(el)PRAZOS_SUP[t][j]=Math.max(0,Number(el.value)||0)})});u.pz=false;toast('Prazos padrão salvos.')}
