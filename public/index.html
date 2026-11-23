@@ -1083,10 +1083,20 @@ var PRAZOS_PRJ=[15,5,7,10];
 /* Etapas: nada marcado = pendente com a equipe de projetos; depois 4 etapas. Projetos gravados no formato antigo (5 etapas, a primeira
    era "Pendente com projetos") são convertidos uma vez: a antiga 0 vira "nada marcado" e as demais descem uma posição, com as mesmas datas. */
 function migraPrj(it){
-  if(!it||it.fmt===2)return false;
-  var e=Number(it.etapa);if(isNaN(e))e=-1;
-  var h=it.hist||{},nh={};Object.keys(h).forEach(function(k){if(+k>=1)nh[+k-1]=h[k]});
-  it.etapa=e<=0?-1:e-1;it.hist=nh;it.fmt=2;return true;
+  if(!it)return false;
+  var mudou=false;
+  if(it.fmt!==2){
+    var e=Number(it.etapa);if(isNaN(e))e=-1;
+    var h=it.hist||{},nh={};Object.keys(h).forEach(function(k){if(+k>=1)nh[+k-1]=h[k]});
+    it.etapa=e<=0?-1:e-1;it.hist=nh;it.fmt=2;mudou=true;
+  }
+  /* "Previsão de entrega" virou a data da próxima etapa: a data que já estava digitada passa a ser a data da próxima etapa */
+  if(it.prometida){
+    var nx=Number(it.etapa)+1;
+    if(nx<4){it.prazos=it.prazos||{};if(!it.prazos[nx])it.prazos[nx]=it.prometida}
+    it.prometida='';mudou=true;
+  }
+  return mudou;
 }                                            /* dias padrão para chegar em cada etapa, a partir da anterior (a 1ª conta da solicitação) */
 var PRJ=[
  {id:'j0',n:'ARQ-01',proj:'Arquitetura: plantas executivas',tip:'SB-4Q3S',rev:'R02',resp:'Studio Alfa',val:'Viktor',prometida:isoDe(-3),obs:'Aguardando compatibilização com estrutura.',criada:isoDe(25),etapa:0,hist:mkHist(0,25)},
@@ -1128,20 +1138,20 @@ var GRUPOS={
  ped:{titulo:'Pedidos',head:['Serviço','Solicitação','Eng.','Tipo','Responsável'],labels:ETAPAS_PED_CURTO},
  flo:{titulo:'Aditivos',head:['Aditivo','ID FlowMaster','Aberto por','Está em'],labels:ETAPAS_FLOW,tons:['t1','t2']},
  lic:{titulo:'Contratações e Aditivos',head:['Pacote','ID','Solicit.','Abertura GLPI','Tipo','Emerg.','Prazo','Necessidade'],labels:ETAPAS_LIC,order:['c0','c1','c2','c4','c5','c3','c6','c7','s0','s1','s2','s3']},
- prj:{titulo:'Projetos',head:['Projeto','Equipe','Responsável validação','Previsão de entrega','Próximo prazo'],labels:CURTO_PRJ}};
+ prj:{titulo:'Projetos',head:['Projeto','Equipe','Responsável validação','Previsão da próxima etapa','Próximo prazo'],labels:CURTO_PRJ}};
 var GRP_ORDEM=['ped','flo','lic','prj'];
 /* campos preenchidos direto na linha, durante o acompanhamento: [chave, rótulo, tipo, dica, faltando?, opções]. "faltando" realça o campo quando a etapa já pede a informação */
 /* O último item de cada campo diz onde ele aparece: um número = embaixo do check dessa etapa; 'c1' = no lugar da coluna de informação nº 1. */
 GRUPOS.ped.quick=[['ped','Nº do pedido (UAU)','text','nº pedido',function(r){return r.etapa>=1&&!r.ped},null,1],['cot','Nº da cotação','text','nº cotação',function(r){return r.etapa>=3&&!r.cot},null,3],['oc','Nº da OC','text','nº OC',function(r){return r.etapa>=5&&!r.oc},null,5]];
 GRUPOS.flo.quick=[['idfm','ID no FlowMaster','text','ID',function(r){return r.etapa>=1&&!r.idfm},null,'c1'],['origem','Aberto por','select','',null,['Obra','Orçamento'],'c2'],['desvio','Está em','select','',null,['Fluxo padrão','Projetos','Suprimentos'],'c3']];
 GRUPOS.lic.quick=[['abertura','Data de abertura do GLPI','date','',function(r){return r.etapa>=0&&!r.abertura},null,'c3'],['emerg','Emergencial?','select','',null,['Não','Sim'],'c5',null,null,function(r){return /^Aditivo/.test(r.tipo||'')}],['prazo','Prazo (padrão, pode ser ajustado)','date','',null,null,'c6',function(r){return r.prazo||prazoSup(r)},function(r){var p=r.prazo||prazoSup(r);return !!(p&&r.etapa<2&&p<hojeISO())}],['necessidade','Data de necessidade','date','',function(r){return !r.necessidade},null,'c7'],['idglpi','Nº do GLPI (vira o ID)','text','nº GLPI',function(r){return r.etapa>=0&&!r.idglpi},null,0],['pedserv','Nº do pedido de serviço','text','nº pedido',function(r){return r.etapa>=1&&!r.pedserv},null,1]];
-GRUPOS.prj.quick=[['val','Responsável pela validação','text','responsável',null,null,'c2'],['prometida','Previsão de entrega','date','',function(r){return r.prometida&&r.etapa<3&&(r.etapa<0||COM_PRJ[r.etapa]==='projetos')&&r.prometida<hojeISO()},null,'c3'],['rev','Revisão','text','revisão',null,null,0]];
+GRUPOS.prj.quick=[['val','Responsável pela validação','text','responsável',null,null,'c2'],['prevprox','Previsão de entrega da próxima etapa (vale no lugar do prazo padrão)','date','',null,null,'c3',function(r){return proxData(r)},function(r){var d=proxData(r);return !!(d&&d<hojeISO())},function(r){return r.etapa>=3}],['rev','Revisão','text','revisão',null,null,0]];
 GRUPOS.flo.hide=[];GRUPOS.lic.hide=[];GRUPOS.prj.hide=[1];GRUPOS.ped.hide=[2,3];
 GRUPOS.lic.fcol={0:function(x){return x.raw.serv},1:function(x){return x.raw.idglpi||''},2:function(x){return x.raw.sol||''},3:function(x){return x.raw.abertura||''},4:function(x){return x.raw.tipo||'Contratação'},5:function(x){var t=x.raw.tipo||'Contratação';return /^Aditivo/.test(t)?'Não se aplica':x.raw.emerg==='Sim'?'Emergencial':'Normal'},6:function(x){return x.raw.prazo||prazoSup(x.raw)},7:function(x){return x.raw.necessidade||''}};
 GRUPOS.lic.fdate={3:true,6:true,7:true};
 GRUPOS.ped.fcol={0:function(x){return x.raw.serv||''},1:function(x){return x.raw.d||''},4:function(x){return x.raw.resp||''}};
 GRUPOS.flo.fcol={0:function(x){return x.raw.n},1:function(x){return x.raw.idfm||''},2:function(x){return x.raw.origem||'Obra'},3:function(x){return x.raw.desvio||'Fluxo padrão'}};
-GRUPOS.prj.fcol={0:function(x){return x.raw.proj},1:function(x){return x.raw.resp||''},2:function(x){return x.raw.val||''},3:function(x){return x.raw.prometida||''}};
+GRUPOS.prj.fcol={0:function(x){return x.raw.proj},1:function(x){return x.raw.resp||''},2:function(x){return x.raw.val||''},3:function(x){return proxData(x.raw)}};
 GRUPOS.prj.fdate={3:true};
 function sub(t){return t?'<div class="m">'+t+'</div>':''}
 function tPed(){return itensPedidos().map(function(b,i){var p=PED[i];
@@ -1192,11 +1202,18 @@ function prevPrj(p){
   var a=[],cur=(p.etapa<0?p.criada:(p.hist[p.etapa]||p.criada)),com=p.etapa<0?'projetos':COM_PRJ[p.etapa];
   for(var i=p.etapa+1;i<4;i++){
     var man=p.prazos&&p.prazos[i];
-    if(man)cur=man;else if(i===p.etapa+1&&com==='projetos'&&p.prometida)cur=p.prometida;else cur=addDias(cur,PRAZOS_PRJ[i]);
+    if(man)cur=man;else cur=addDias(cur,PRAZOS_PRJ[i]);
     a[i]=cur;
   }
   return a;
-}function tPrj(){return PRJ.map(function(p,i){
+}/* "Previsão de entrega" = data prevista da PRÓXIMA etapa (a calculada pelos prazos ou a que a pessoa definiu); vazia quando o projeto está concluído */
+function proxData(r){return (r.etapa<3?prevPrj(r)[r.etapa+1]:'')||''}
+function prazoProx(it,v){
+  var nx=Number(it.etapa)+1;if(nx>3)return;
+  if(!v){if(it.prazos){delete it.prazos[nx];if(!Object.keys(it.prazos).length)delete it.prazos}}
+  else{it.prazos=it.prazos||{};it.prazos[nx]=v}
+}
+function tPrj(){return PRJ.map(function(p,i){
   var prev=prevPrj(p),prox=prev[p.etapa+1],atr=!!(prox&&prox<hojeISO()),com=p.etapa<0?'projetos':COM_PRJ[p.etapa],feito=p.etapa>=3;
   var promAtr=p.prometida&&!feito&&com==='projetos'&&p.prometida<hojeISO();
   return {id:p.id,cor:corIdx(i),g:'prj',raw:p,estado:atr?'bad':'',prev:prev,
@@ -1206,7 +1223,7 @@ function prevPrj(p){
     gut:feito?'':gutBtn('Projeto','','Projeto '+p.proj+' ('+(p.etapa<0?'pendente com a equipe de projetos':ETAPAS_PRJ[p.etapa])+')',p.val),
     cols:['<b>'+restricaoEsc(p.proj)+'</b>'+sub(restricaoEsc([p.n,p.tip,p.rev].filter(Boolean).join(' · '))),
       p.resp?restricaoEsc(p.resp):'<span class="m">—</span>',p.val?restricaoEsc(p.val):'<span class="m">—</span>',
-      p.prometida?'<span'+(promAtr?' style="color:var(--bad);font-weight:600"':'')+'>'+fd(p.prometida)+'</span>':'<span class="m">—</span>',
+      '<span class="m">—</span>',
       feito?chip('Concluído','ok'):'<span'+(atr?' style="color:var(--bad);font-weight:600"':'')+'>'+proxRotPrj(p.etapa)+' '+fd(prox)+'</span>'+sub('com '+(com==='obra'?'a obra':'a equipe de projetos')+(atr?' · atrasado':''))]};
 })}
 function stageCell(grupo,x,i){
@@ -1256,7 +1273,7 @@ var CFG={
   extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button>'},
   filtros:function(){return [['status','Etapa',opts2(['Pendente com a equipe de projetos'].concat(ETAPAS_PRJ))],['val','Responsável validação',opts2(uniq(PRJ.map(function(p){return p.val})))],['tip','Tipologia / área',opts2(uniq(PRJ.map(function(p){return p.tip})))]]},
   nota:'Pendente com a equipe de projetos: ainda sem projeto, ou aguardando retorno da validação ou o executivo. Pendente com a obra: projeto disponibilizado esperando validação. Os números em itálico são as datas previstas pelos prazos padrão; clique em qualquer data para mudá-la (sem itálico, a data foi definida por você).',
-  campos:[['proj','Projeto / disciplina *','text',null,'Ex.: Hidráulica: ramais e prumadas',1],['n','Código','text',null,'Ex.: HID-03'],['tip','Tipologia / área','text',null,'Ex.: SB-4Q3S'],['rev','Revisão','text',null,'Ex.: R01'],['val','Responsável pela validação','text','PESSOAS','Ex.: Viktor'],['prometida','Previsão de entrega (data que projetos prometeu para a próxima entrega)','date'],['etapa','Etapa atual','etapaN',ETAPAS_PRJ,'Pendente com a equipe de projetos'],['criada','Data da solicitação','date'],['obs','Observação','area',null,'',1]],
+  campos:[['proj','Projeto / disciplina *','text',null,'Ex.: Hidráulica: ramais e prumadas',1],['n','Código','text',null,'Ex.: HID-03'],['tip','Tipologia / área','text',null,'Ex.: SB-4Q3S'],['rev','Revisão','text',null,'Ex.: R01'],['val','Responsável pela validação','text','PESSOAS','Ex.: Viktor'],['etapa','Etapa atual','etapaN',ETAPAS_PRJ,'Pendente com a equipe de projetos'],['criada','Data da solicitação','date'],['obs','Observação','area',null,'',1]],
   vazio:function(){return {proj:'',n:'',tip:'',rev:'',resp:'',val:'',prometida:'',obs:'',etapa:-1,criada:hojeISO()}},obrig:['proj'],prefixo:'j'},
  licglpi:{lista:function(){return LIC},itens:tLic,rotulo:['solicitação','solicitações'],novo:'Nova solicitação',grade:true,busca:'Buscar por pacote, nº do GLPI, pedido de serviço ou solicitante',
   extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button>'},
@@ -1397,7 +1414,7 @@ var GRADES={
   projetos:{botao:'Adicionar projetos',titulo:'Adicionar projetos',rot:'projeto(s)',dica:'Só o <b>Projeto</b> é obrigatório',
     cols:[{k:'proj',l:'Projeto / disciplina *',w:'30%'},{k:'n',l:'Código',w:'10%'},{k:'tip',l:'Tipologia / área',w:'14%'},{k:'rev',l:'Revisão',w:'8%'},{k:'val',l:'Responsável pela validação',w:'20%',lista:'dl-pessoas'},{k:'prometida',l:'Previsão de entrega',w:'13%',t:'data'}],
     faltam:function(r){var e={};if(!String(r.proj).trim())e.proj=1;return e},
-    cria:function(r,h){return {id:novoId('j'),proj:String(r.proj).trim(),n:String(r.n).trim(),tip:String(r.tip).trim(),rev:String(r.rev).trim(),resp:'',val:String(r.val).trim(),prometida:gradeData(r.prometida)||'',obs:'',criada:h,etapa:-1,hist:{},v:2,fmt:2}}},
+    cria:function(r,h){return {id:novoId('j'),proj:String(r.proj).trim(),n:String(r.n).trim(),tip:String(r.tip).trim(),rev:String(r.rev).trim(),resp:'',val:String(r.val).trim(),prazos:gradeD0(r.prometida),obs:'',criada:h,etapa:-1,hist:{},v:2,fmt:2}}},
   flows:{botao:'Adicionar aditivos',titulo:'Adicionar aditivos (flows)',rot:'aditivo(s)',dica:'Só o <b>Aditivo</b> é obrigatório',
     cols:[{k:'n',l:'Aditivo *',w:'26%'},{k:'idfm',l:'ID no FlowMaster',w:'9%'},{k:'origem',l:'Aberto por',w:'10%',t:'sel',op:['Obra','Orçamento'],def:'Obra'},{k:'obra',l:'Obra',w:'11%',t:'sel',op:function(){return ['']['concat'](CAD.obras)},vr:'(sem obra)'},{k:'sol',l:'Solicitante',w:'13%',lista:'dl-pessoas'},{k:'motivo',l:'Motivo',w:'18%',t:'sel',op:function(){return MOTIVOS_FLOW},def:'Não informado'},{k:'desvio',l:'Está em',w:'13%',t:'sel',op:['Fluxo padrão','Projetos','Suprimentos'],def:'Fluxo padrão'}],
     faltam:function(r){var e={};if(!String(r.n).trim())e.n=1;return e},
@@ -1422,6 +1439,7 @@ function gradeData(t){
   m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(t);if(m)return gValida(t);
   return null;
 }
+function gradeD0(t){var d=gradeData(t);return d?{0:d}:undefined}
 function gCelulaRuim(c,r){
   var v=gVal(r,c).trim();
   if(c.t==='data'&&v&&gradeData(v)===null)return true;
@@ -1558,7 +1576,7 @@ document.addEventListener('change',function(e){
   var q=e.target.closest&&e.target.closest('[data-qf]');if(!q||!CFG[CURRENT_SCREEN])return;
   var it=CFG[CURRENT_SCREEN].lista().filter(function(x){return x.id===q.dataset.id})[0];if(!it)return;
   var v=q.value.trim();if(q.type==='number')v=Number(v)||0;
-  it[q.dataset.qf]=v;save();QF_SUJO=true;
+  if(q.dataset.qf==='prevprox')prazoProx(it,v);else it[q.dataset.qf]=v;save();QF_SUJO=true;
   if(q.tagName==='SELECT'){QF_SUJO=false;renderOutras()}
 });
 document.addEventListener('focusout',function(e){
@@ -1676,7 +1694,7 @@ function hojeDados(){
   var lc=[];LIC.forEach(function(l){if(!mObra(l.obra)||l.etapa>=2)return;var pz=l.prazo||prazoSup(l);if(pz&&pz<hj)lc.push({l:l,pz:pz,atraso:diasDesde(pz)})});
   lc.sort(function(a,b){return b.atraso-a.atraso});
   var pj=[];PRJ.forEach(function(p){if(p.etapa>=3)return;
-    var prox=prevPrj(p)[p.etapa+1],com=p.etapa<0?'projetos':COM_PRJ[p.etapa],atr=!!(prox&&prox<hj),prom=!!(p.prometida&&com==='projetos'&&p.prometida<hj);
+    var prox=prevPrj(p)[p.etapa+1],com=p.etapa<0?'projetos':COM_PRJ[p.etapa],atr=!!(prox&&prox<hj),prom=false;
     if(atr||prom)pj.push({p:p,prox:prox,com:com,prom:prom,atraso:diasDesde(prom?p.prometida:prox)})});
   pj.sort(function(a,b){return b.atraso-a.atraso});
   var gt=restV().filter(function(r){return r.status!=='resolvido'&&restricaoAtraso(r)>0}).map(function(r){return {r:r,atraso:restricaoAtraso(r),c:restricaoCls(r)}});
