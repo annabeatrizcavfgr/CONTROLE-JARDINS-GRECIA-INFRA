@@ -2009,6 +2009,8 @@ document.addEventListener('change',function(e){
   acessosGrava([{email:s.dataset.e,obra:s.dataset.o,nivel:s.value}]);
 });
 var SYNC_COLS={restricoes:{g:function(){return RESTRICOES},s:function(v){RESTRICOES=v}},pedidos:{g:function(){return PED},s:function(v){PED=v}},flows:{g:function(){return FLO},s:function(v){FLO=v}},contratacoes:{g:function(){return LIC},s:function(v){LIC=v}},projetos:{g:function(){return PRJ},s:function(v){PRJ=v}}};
+/* a chave do banco é (colecao, id) para o painel todo; por isso as configurações da obra CASAS ganham o sufixo @CASAS */
+function cfgId(k){return FRENTE==='INFRA'?k:k+'@'+FRENTE}
 function syncSubst(alvo,v){if(Array.isArray(alvo)){alvo.length=0;(v||[]).forEach(function(x){alvo.push(x)})}else{Object.keys(alvo).forEach(function(k){delete alvo[k]});Object.keys(v||{}).forEach(function(k){alvo[k]=v[k]})}}
 var SYNC_CFG={prazos_prj:{g:function(){return PRAZOS_PRJ},s:function(v){syncSubst(PRAZOS_PRJ,(v&&v.length===5)?v.slice(1):v)}},prazos_sup:{g:function(){return PRAZOS_SUP},s:function(v){syncSubst(PRAZOS_SUP,v)}},prazos_flow:{g:function(){return PRAZOS_FLOW},s:function(v){syncSubst(PRAZOS_FLOW,v)}},
   cad:{g:function(){return {obras:CAD.obras,tipos:CAD.tipos}},s:function(v){['obras','tipos'].forEach(function(k){if(v&&Array.isArray(v[k]))syncSubst(CAD[k],v[k])})}}};
@@ -2045,7 +2047,7 @@ function syncAplica(rows,inicial){
     if(r.updated_at&&r.updated_at>SYNC.ultimo)SYNC.ultimo=r.updated_at;
     var chave=r.colecao+'/'+r.id;
     if(r.colecao==='config'){
-      var c=SYNC_CFG[r.id];if(!c||r.deleted)return;
+      var c=SYNC_CFG[String(r.id).split('@')[0]];if(!c||r.deleted)return;
       var sv=canon(r.value),lc=canon(c.g());
       if(sv===lc){SYNC.snap[chave]=sv;return}
       if(inicial||lc===SYNC.snap[chave]){c.s(r.value);SYNC.snap[chave]=sv;mudou=true}
@@ -2092,12 +2094,12 @@ function syncEmpurra(){
     Object.keys(SYNC.snap).forEach(function(ch){if(ch.indexOf(k+'/')===0&&!vistos[ch]){linhas.push({obra:FRENTE,colecao:k,id:ch.slice(k.length+1),ord:SYNC.ord[ch]||0,value:{},deleted:true});sumidos.push(ch)}});
   });
   Object.keys(SYNC_CFG).forEach(function(k){
-    var ch='config/'+k,v=SYNC_CFG[k].g(),c=canon(v);
-    if(SYNC.snap[ch]!==c){linhas.push({obra:FRENTE,colecao:'config',id:k,ord:0,value:limpo(v),deleted:false});novos[ch]=c}
+    var ch='config/'+cfgId(k),v=SYNC_CFG[k].g(),c=canon(v);
+    if(SYNC.snap[ch]!==c){linhas.push({obra:FRENTE,colecao:'config',id:cfgId(k),ord:0,value:limpo(v),deleted:false});novos[ch]=c}
   });
   if(!linhas.length)return;
   SYNC.pushando=true;
-  syncReq('POST','docs?on_conflict=obra,colecao,id',linhas,{Prefer:'resolution=merge-duplicates,return=minimal'}).then(function(){
+  syncReq('POST','docs?on_conflict=colecao,id',linhas,{Prefer:'resolution=merge-duplicates,return=minimal'}).then(function(){
     Object.keys(novos).forEach(function(ch){SYNC.snap[ch]=novos[ch]});
     sumidos.forEach(function(ch){delete SYNC.snap[ch]});
     SYNC.pushando=false;

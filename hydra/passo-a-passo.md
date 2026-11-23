@@ -144,3 +144,5 @@ O painel tem as obras INFRA e CASAS, cada uma com os próprios dados. Quem pode 
 **Níveis:** "Só visualiza" vê tudo da obra e não altera nada (o banco também recusa a gravação). "Pode editar" altera a obra. "Administradora" vê e altera as duas obras e mexe na tela Acessos. Quem entra com e-mail FGR e não está na lista vê "Sem acesso".
 
 **Trocar o endereço do painel:** o login só volta para endereços que estão na lista de Redirect URLs do Hydra. Se o endereço mudar, alguém precisa incluir o novo na lista (o TI fez isso para o endereço atual).
+
+**Observação:** o Hydra não deixa o usuário do Studio rodar comandos que apagam (DROP). Por isso o `02-acessos.sql` não usa nenhum: as regras por obra são somadas às que já existem. Se o Studio acusar `cannot run destructive DDL`, você está com uma versão antiga do arquivo: pegue a mais recente do repositório.
