@@ -456,6 +456,16 @@ button.b.bad{background:var(--bad);border-color:var(--bad);color:var(--surface)}
 .al-dot{position:absolute;top:-6px;right:-10px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#E0252B;color:#fff;font:700 10px/17px var(--sans);text-align:center;box-shadow:0 0 0 2px var(--surface);animation:pulsa 1.6s ease-in-out infinite}
 @keyframes pulsa{50%{transform:scale(1.16)}}
 @media (prefers-reduced-motion:reduce){.al-dot{animation:none}}
+.frente-tag{font:600 12px var(--sans);letter-spacing:.06em;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:4px 11px;background:var(--surface)}
+.frente-tag:empty{display:none}
+.side .frente-um{font:600 14px var(--sans);color:var(--side-ink);padding:2px 2px}
+.side .obrasel .nota{font-size:11.5px;color:var(--side-muted);line-height:1.4}
+body.so-ver [data-act=novo],body.so-ver [data-act=grade],body.so-ver [data-act=editar],body.so-ver [data-act=excluir],body.so-ver [data-act=assumir],body.so-ver [data-act=pz],body.so-ver [data-to],body.so-ver #btnNovaRestricao,body.so-ver .cad-add,body.so-ver [data-cad-del],body.so-ver [data-del-restricao]{display:none!important}
+body.so-ver button.chk{cursor:default}
+.ac-form{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ac-form input,.ac-form select,.ac-row select{font:14px var(--sans);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.ac-form input{flex:1 1 260px;min-width:200px}
+.ac-row select{padding:4px 8px;font-size:13px}
 .side .obrasel{display:flex;flex-direction:column;gap:6px}
 .side .obrasel .grupo{margin:0}
 .side .obrasel select{width:100%;font:14px var(--sans);background:rgba(255,255,255,.08);color:var(--side-ink);border:1px solid var(--side-line);border-radius:8px;padding:8px 10px}
@@ -563,6 +573,7 @@ button.b.sec.on{background:var(--accent);color:var(--accent-ink);border-color:va
 <div class="pd app" id="app">
   <aside class="side" id="side">
     <div class="brand"><div class="logo">FGR</div><div><b>Controle Jardins Grécia</b></div></div>
+    <div id="frente-box"></div>
     <div><div class="grupo">Telas</div><nav id="nav" aria-label="Telas"></nav></div>
     <div class="side-foot">
 
@@ -571,7 +582,7 @@ button.b.sec.on{background:var(--accent);color:var(--accent-ink);border-color:va
   </aside>
   <div class="conteudo">
     <div class="bar"><button class="burger" id="burger" aria-label="Abrir menu"><svg class="i" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-      <div><h1 id="titulo"></h1><p id="subtitulo"></p></div><span class="esp"></span><button type="button" class="tema-btn" id="btn-tema" aria-label="Alternar entre tema claro e escuro"></button></div>
+      <div><h1 id="titulo"></h1><p id="subtitulo"></p></div><span class="esp"></span><span class="frente-tag" id="frente-tag"></span><button type="button" class="tema-btn" id="btn-tema" aria-label="Alternar entre tema claro e escuro"></button></div>
     <div class="aviso-ex" id="aviso"></div>
     <main id="main"></main>
   </div>
@@ -1029,7 +1040,7 @@ var ICONES={list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>'
 function ic(n,s){s=s||18;return '<svg class="i" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONES[n]+'</svg>'}
 var CHECK='<svg class="i" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4.5 4.5L19 7"/></svg>';
 var NAV=[['hoje','Dashboard','dash'],['restricoes','Matriz GUT','target'],['pedidos','Controle de pedidos','receipt'],['flows','Controle de flows','bolt'],['licglpi','Contratações e Aditivos','pkg'],['projetos','Validação de projetos','draft'],['cadastros','Cadastros','sliders']];
-var TITULOS={hoje:['Dashboard','Visão geral: onde estão pedidos, flows, contratações, projetos e restrições, e o que precisa de cobrança.'],cadastros:['Cadastros','Obras e tipos de pedido usados nas listas e nos formulários.'],restricoes:['Matriz GUT','Priorize as restrições por Gravidade, Urgência e Tendência.'],
+var TITULOS={hoje:['Dashboard','Visão geral: onde estão pedidos, flows, contratações, projetos e restrições, e o que precisa de cobrança.'],cadastros:['Cadastros','Obras e tipos de pedido usados nas listas e nos formulários.'],acessos:['Acessos','Quem pode ver ou editar cada obra.'],restricoes:['Matriz GUT','Priorize as restrições por Gravidade, Urgência e Tendência.'],
  pedidos:['Controle de pedidos','Inclua cada solicitação e marque a etapa conforme o pedido avança, da lista enviada até a OC enviada ao fornecedor.'],
  flows:['Controle de flows','Aditivos do FlowMaster: marque a etapa em que cada um está. Mapeados pelo nome e pelo ID.'],
  licglpi:['Contratações e Aditivos','Solicitações de contratação e de aditivo feitas ao Suprimentos. O GLPI é a plataforma onde o chamado é aberto.'],
@@ -1075,7 +1086,11 @@ function obraSub(o){return (!OBRA_F&&o)?restricaoEsc(o):''}
 function restV(){return RESTRICOES.map(function(x,i){return Object.assign({},x,{item:i+1})})}
 
 /* ---------- dados: começam com exemplos; tudo é guardado só neste navegador ---------- */
-var STORE_KEY='fgr_gestao_pendencias_v1',EXEMPLO=false,SAVED_XV=6;
+/* duas obras no mesmo painel: cada uma tem os seus próprios dados (no banco, a coluna "obra"). Trocar de obra recarrega a página. */
+var FRENTES=['INFRA','CASAS'];
+var FRENTE=(function(){var f=lsGet('fgr_frente','INFRA');return FRENTES.indexOf(f)>=0?f:'INFRA'})();
+var SO_VER=false;   /* acesso só para visualizar (definido depois do login) */
+var STORE_KEY='fgr_gestao_pendencias_v1'+(FRENTE==='INFRA'?'':'_'+FRENTE),EXEMPLO=false,SAVED_XV=6;
 function mkHist(est,dias){var h={};for(var i=0;i<=est;i++)h[i]=isoDe(dias+(est-i)*2);return h}
 var RESP=['Anna','Erika','Anna','Erika','Anna','Erika','Anna','Erika','Anna','Erika'];
 PED=PED.map(function(p,i){return {id:'p'+i,n:p.n,serv:p.serv,d:p.d,eng:p.eng,tipo:p.tipo,resp:p.s?RESP[i%10]:'',ped:p.s?'PED'+p.n.slice(3):'',cot:p.s>=3?String(7000+i*13):'',oc:p.s>=5?String(31000+i*17):'',obs:'',criada:isoDe(p.dias+p.s*2),etapa:p.s,hist:mkHist(p.s,p.dias)}});
@@ -1128,10 +1143,10 @@ var PRJ=[
  {id:'j6',n:'PAI-01',proj:'Paisagismo: áreas comuns',tip:'Condomínio 2',rev:'R00',resp:'Verde Paisagem',val:'Paulo',prometida:'',obs:'',criada:isoDe(20),etapa:1,hist:mkHist(1,9)},
  {id:'j7',n:'ESQ-02',proj:'Esquadrias: detalhamento',tip:'SB-4Q3S',rev:'R02',resp:'Alumifort',val:'Marina',prometida:'',obs:'',criada:isoDe(60),etapa:4,hist:mkHist(4,6)}];
 var DADOS_N=100;
-function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify({R:RESTRICOES,P:PED,F:FLO,L:LIC,J:PRJ,Z:PRAZOS_PRJ,Y:PRAZOS_SUP,W:PRAZOS_FLOW,C:CAD,xv:6,n:nextId,ex:EXEMPLO}))}catch(e){}
+function save(){if(SO_VER)return;try{localStorage.setItem(STORE_KEY,JSON.stringify({R:RESTRICOES,P:PED,F:FLO,L:LIC,J:PRJ,Z:PRAZOS_PRJ,Y:PRAZOS_SUP,W:PRAZOS_FLOW,C:CAD,xv:6,n:nextId,ex:EXEMPLO}))}catch(e){}
   if(typeof SYNC!=='undefined'&&SYNC&&SYNC.ativo)syncAgenda();}(function(){try{var s=JSON.parse(localStorage.getItem(STORE_KEY)||'null');if(s&&s.R){RESTRICOES=s.R;PED=s.P;FLO=s.F;LIC=s.L||[];if(s.J)PRJ=s.J;if(s.Z)PRAZOS_PRJ=s.Z;if(s.Y)PRAZOS_SUP=s.Y;if(s.W)PRAZOS_FLOW=s.W;if(s.C)['obras','tipos'].forEach(function(k){if(Array.isArray(s.C[k])){CAD[k].length=0;s.C[k].forEach(function(x){CAD[k].push(x)})}});nextId=s.n;EXEMPLO=!!s.ex;SAVED_XV=s.xv}}catch(e){}})();
 /* versão de uso real: sem dados de exemplo; só existe o que a pessoa cadastrar neste navegador */
-(function(){var tem=false;try{tem=!!localStorage.getItem(STORE_KEY)}catch(e){}if(!tem){RESTRICOES=[];PED=[];FLO=[];LIC=[];PRJ=[]}EXEMPLO=false})();
+(function(){var tem=false;try{tem=!!localStorage.getItem(STORE_KEY)}catch(e){}if(!tem){RESTRICOES=[];PED=[];FLO=[];LIC=[];PRJ=[];if(FRENTE!=='INFRA')CAD.obras.length=0}EXEMPLO=false})();
 /* itens de exemplo recebem uma obra; os que a usuária cadastrou ficam sem obra até ela escolher */
 (function(){[[PED,/^p[0-9]$/],[LIC,/^l[0-9]$/]].forEach(function(g){g[0].forEach(function(x,i){if(x.obra===undefined&&g[1].test(x.id))x.obra=CAD.obras.length?CAD.obras[i%CAD.obras.length]:''})})})();
 PRJ.forEach(migraPrj);if(PRAZOS_PRJ.length===5)PRAZOS_PRJ=PRAZOS_PRJ.slice(1);
@@ -1298,7 +1313,8 @@ function linhasTabela(grupo,items,ordem,td){
     var fechado=!!fe[g.chave];
     return grupoResumoHtml(g,ordem,fechado)+(fechado?'':g.itens.map(function(x){
       var p=x.raw,y=Object.assign({},x,{cols:x.cols.slice()});
-      y.cols[0]='<b>'+restricaoEsc(String(p.n||'').trim()||'(sem código)')+'</b>'+sub(restricaoEsc([p.tip,p.rev].filter(Boolean).join(' · ')));
+      var cod=String(p.n||'').trim(),loc=String(p.tip||'').trim(),rv=String(p.rev||'').trim();   /* sem código de validação, o local vira o título da linha */
+      y.cols[0]='<b>'+restricaoEsc(cod||loc||rv||'(sem identificação)')+'</b>'+sub(restricaoEsc((cod?[loc,rv]:(loc?[rv]:[])).filter(Boolean).join(' · ')));
       return linhaItem(y,ordem,td,true);
     }).join(''));
   }).join('');
@@ -1660,7 +1676,7 @@ var CONF_LIMPAR=false;
 function avisoRender(){
   var el=$('#aviso');if(!el)return;
   var st=(typeof SYNC!=='undefined'&&SYNC)?SYNC.estado:'local';
-  if(st==='ok'){el.style.display='none';return}
+  if(st==='ok'||st==='sem'){el.style.display='none';return}
   el.style.display='';
   if(st==='carregando'){el.innerHTML='Carregando os dados compartilhados…';return}
   if(st==='erro'&&SYNC.ativo){el.innerHTML='Sem conexão com os dados compartilhados. As alterações ficam guardadas e são enviadas quando a conexão voltar.';return}
@@ -1831,7 +1847,7 @@ function renderHoje(){
    +'<div class="m">Para cobrar: pedidos que ainda não têm responsável; flows com o prazo da área vencido; contratações com prazo vencido antes de "Contratação concluída"; projetos com prazo ou previsão de entrega vencidos; restrições da Matriz GUT em aberto com prazo vencido.</div>';
 }function shell(){
   document.getElementById('nav').innerHTML=NAV.map(function(n){
-    var bd=n[0]==='hoje'?hojeDados().total:n[0]==='cadastros'?0:n[0]==='restricoes'?RESTRICOES.filter(function(r){return r.status!=='resolvido'}).length:n[0]==='pedidos'?PED.filter(function(p){return p.etapa<6&&mObra(p.obra)}).length:n[0]==='projetos'?PRJ.filter(function(p){return p.etapa<3}).length:n[0]==='flows'?FLO.filter(function(f){return f.etapa<7&&mObra(f.obra)}).length:LIC.filter(function(l){return l.etapa<3&&mObra(l.obra)}).length;
+    var bd=n[0]==='hoje'?hojeDados().total:(n[0]==='cadastros'||n[0]==='acessos')?0:n[0]==='restricoes'?RESTRICOES.filter(function(r){return r.status!=='resolvido'}).length:n[0]==='pedidos'?PED.filter(function(p){return p.etapa<6&&mObra(p.obra)}).length:n[0]==='projetos'?PRJ.filter(function(p){return p.etapa<3}).length:n[0]==='flows'?FLO.filter(function(f){return f.etapa<7&&mObra(f.obra)}).length:LIC.filter(function(l){return l.etapa<3&&mObra(l.obra)}).length;
     return '<button class="nv'+(CURRENT_SCREEN===n[0]?' on':'')+'" data-tab="'+n[0]+'"'+(CURRENT_SCREEN===n[0]?' aria-current="page"':'')+'>'+ic(n[2])+'<span>'+n[1]+'</span>'+(bd?'<span class="bd">'+bd+'</span>':'')+'</button>'}).join('');
   $('#titulo').textContent=TITULOS[CURRENT_SCREEN][0];$('#subtitulo').textContent=TITULOS[CURRENT_SCREEN][1];
   $('#side').classList.remove('aberto');$('#scrim').classList.remove('on');
@@ -1842,7 +1858,7 @@ function render(){
   $('#main').className=CURRENT_SCREEN==='restricoes'?'wide':'';
   if(CURRENT_SCREEN==='restricoes')renderRestricoes();
   else{document.body.classList.remove('on-restricoes','restricao-foco');
-    if(CURRENT_SCREEN==='hoje')renderHoje();else if(CURRENT_SCREEN==='cadastros')renderCadastros();else renderOutras()}
+    if(CURRENT_SCREEN==='hoje')renderHoje();else if(CURRENT_SCREEN==='cadastros')renderCadastros();else if(CURRENT_SCREEN==='acessos')renderAcessos();else renderOutras()}
 }
 /* ---------- eventos ---------- */
 document.addEventListener('click',function(e){
@@ -1919,6 +1935,79 @@ $('#burger').onclick=function(){$('#side').classList.add('aberto');$('#scrim').c
 var SYNC={ativo:false,estado:'local',snap:{},ord:{},seq:0,ultimo:'',pushando:false,denovo:false,puxando:false,pendente:false,timer:null,poll:null};
 window.fgrSync=SYNC;
 var SYNC_SCHEMA='app_planejamento_controle_obras';
+/* ---------- obra e acesso: quem pode ver/editar cada obra (tabela acessos, administrada na tela Acessos) ---------- */
+var ACESSO=null;   /* depois do login: {admin:bool, obras:{INFRA:'ver'|'editar',...}} */
+function frenteRender(){
+  var box=$('#frente-box');if(!box)return;
+  var lista=ACESSO?FRENTES.filter(function(f){return ACESSO.admin||ACESSO.obras[f]}):FRENTES;
+  var tag=$('#frente-tag');if(tag)tag.textContent=FRENTE;
+  var h='<div class="obrasel"><div class="grupo">Obra</div>';
+  if(lista.length>1)h+='<select id="frente-sel" aria-label="Obra">'+lista.map(function(f){return '<option'+(f===FRENTE?' selected':'')+'>'+f+'</option>'}).join('')+'</select>';
+  else h+='<div class="frente-um">'+FRENTE+'</div>';
+  if(SO_VER)h+='<div class="nota">Você só pode visualizar esta obra.</div>';
+  box.innerHTML=h+'</div>';
+}
+function trocaFrente(f){
+  if(f===FRENTE)return;
+  lsSet('fgr_frente',f);
+  if(SYNC.ativo){clearTimeout(SYNC.timer);syncEmpurra()}
+  var t0=Date.now();(function esp(){if(SYNC.ativo&&SYNC.pushando&&Date.now()-t0<4000){setTimeout(esp,150);return}location.reload()})();
+}
+document.addEventListener('change',function(e){if(e.target&&e.target.id==='frente-sel')trocaFrente(e.target.value)});
+/* acesso só para visualizar: a trava de verdade está no banco; aqui a tela só impede de tentar */
+var SEGURO_VER={seg:1,filtros:1,limpar:1,cfrm:1,cflimpar:1,agrupar:1,grupo:1};
+function bloqueiaVer(e){
+  if(!SO_VER)return;
+  var t=e.target;if(!t||!t.closest||!t.closest('#main'))return;
+  var bloqueia=false;
+  if(e.type==='click'){
+    var a=t.closest('[data-act]');
+    if(a&&!SEGURO_VER[a.dataset.act])bloqueia=true;
+    if(t.closest('button.chk,[data-etdt],[data-etprev],[data-to],[data-del-restricao],[data-del-ok],[data-cad-add],[data-cad-del],#rnSalvar,.restricao-table td.restricao-ed,td[data-draft-date],td[data-draft-menu]'))bloqueia=true;
+  }else if(t.closest('[data-gr],[data-qf],[data-draft],[data-cad-in],.formc'))bloqueia=true;
+  if(bloqueia){e.stopImmediatePropagation();e.preventDefault();toast('Você tem acesso só para visualizar esta obra.');if(e.type!=='click')render()}
+}
+['click','input','change','paste','keydown'].forEach(function(ev){document.addEventListener(ev,bloqueiaVer,true)});
+/* tela Acessos (só quem é administradora) */
+var ACESSOS_LISTA=[],ACESSOS_ERRO='',ACESSOS_ESPERA=false;
+function acessosCarrega(){return syncReq('GET','acessos?select=email,obra,nivel&order=email.asc,obra.asc').then(function(r){ACESSOS_LISTA=r||[];ACESSOS_ERRO=''}).catch(function(e){ACESSOS_ERRO='Não consegui carregar os acessos'+((e&&e.status)?' (HTTP '+e.status+')':'')+'.'})}
+function renderAcessos(){
+  $('#main').innerHTML='<div class="cad-wrap"><div class="card cad-box"><div class="m">Carregando os acessos…</div></div></div>';
+  shell();
+  if(!window.fgrAuth){$('#main').innerHTML='<div class="cad-wrap"><div class="card cad-box"><div class="m">Os acessos só funcionam no endereço publicado (com login).</div></div></div>';return}
+  acessosCarrega().then(desenhaAcessos);
+}
+function nivelRot(n){return n==='admin'?'Administradora':n==='editar'?'Pode editar':'Só visualiza'}
+function desenhaAcessos(){
+  if(CURRENT_SCREEN!=='acessos')return;
+  var eu=String(window.fgrAuth.email()||'').toLowerCase();
+  var linhas=ACESSOS_LISTA.length?ACESSOS_LISTA.map(function(r){
+    var e=restricaoEsc(r.email),o=restricaoEsc(r.obra),adm=r.nivel==='admin';
+    return '<li class="cad-row ac-row"><span class="cad-nome">'+e+(String(r.email).toLowerCase()===eu?' <span class="m" style="margin:0">(você)</span>':'')+'</span><span class="m" style="margin:0;min-width:70px">'+(adm?'todas as obras':o)+'</span>'
+     +(adm?'<span class="m" style="margin:0;min-width:110px">Administradora</span>':'<select data-ac-nivel data-e="'+e+'" data-o="'+o+'" aria-label="Nível de '+e+' em '+o+'"><option value="ver"'+(r.nivel==='ver'?' selected':'')+'>Só visualiza</option><option value="editar"'+(r.nivel==='editar'?' selected':'')+'>Pode editar</option></select>')
+     +'<button type="button" class="ic" data-ac-del data-e="'+e+'" data-o="'+o+'" title="Remover acesso" aria-label="Remover acesso de '+e+'">✕</button></li>'}).join(''):'<li class="cad-row"><span class="m" style="margin:0">Ninguém cadastrado.</span></li>';
+  $('#main').innerHTML='<div class="cad-wrap"><div class="card cad-box"><h2>Quem pode acessar</h2><div class="m">Quem entra com a conta FGR e não está nesta lista não vê nenhuma obra. "Só visualiza" enxerga tudo da obra mas não altera nada. A administradora vê e altera as duas obras e mexe nesta lista.</div>'
+   +(ACESSOS_ERRO?'<div class="m" style="color:var(--bad)">'+restricaoEsc(ACESSOS_ERRO)+'</div>':'')
+   +'<div class="ac-form"><input id="ac-email" type="email" autocomplete="off" placeholder="nome.sobrenome@fgr.com.br" aria-label="E-mail da pessoa"><select id="ac-obra" aria-label="Obra">'+FRENTES.map(function(f){return '<option>'+f+'</option>'}).join('')+'<option value="*">'+FRENTES.join(' e ')+'</option></select><select id="ac-nivel" aria-label="Nível"><option value="ver">Só visualiza</option><option value="editar">Pode editar</option><option value="admin">Administradora (todas as obras)</option></select><button type="button" class="b" data-ac-add>+ Adicionar</button></div>'
+   +'<ul class="cad-list" style="margin-top:14px">'+linhas+'</ul></div></div>';
+}
+function acessosGrava(rows){return syncReq('POST','acessos?on_conflict=email,obra',rows,{Prefer:'resolution=merge-duplicates,return=minimal'}).then(function(){return acessosCarrega()}).then(desenhaAcessos).catch(function(e){toast('Não consegui salvar'+((e&&e.status)?' (HTTP '+e.status+')':'')+'.')})}
+document.addEventListener('click',function(e){
+  var t=e.target.closest&&e.target.closest('[data-ac-add],[data-ac-del]');if(!t)return;
+  if(t.hasAttribute('data-ac-add')){
+    var em=String($('#ac-email').value||'').trim().toLowerCase(),ob=$('#ac-obra').value,nv=$('#ac-nivel').value;
+    if(!/^[^@\s]+@fgr\.com(\.br)?$/i.test(em)){toast('Digite um e-mail @fgr.com.br.');return}
+    var rows=nv==='admin'?[{email:em,obra:'*',nivel:'admin'}]:(ob==='*'?FRENTES:[ob]).map(function(f){return {email:em,obra:f,nivel:nv}});
+    acessosGrava(rows);return;
+  }
+  var em2=t.dataset.e,ob2=t.dataset.o;
+  if(String(em2).toLowerCase()===String(window.fgrAuth.email()).toLowerCase()&&!window.confirm('Remover o seu próprio acesso?'))return;
+  syncReq('DELETE','acessos?email=eq.'+encodeURIComponent(em2)+'&obra=eq.'+encodeURIComponent(ob2),undefined,{Prefer:'return=minimal'}).then(function(){return acessosCarrega()}).then(desenhaAcessos).catch(function(){toast('Não consegui remover.')});
+});
+document.addEventListener('change',function(e){
+  var s=e.target.closest&&e.target.closest('select[data-ac-nivel]');if(!s)return;
+  acessosGrava([{email:s.dataset.e,obra:s.dataset.o,nivel:s.value}]);
+});
 var SYNC_COLS={restricoes:{g:function(){return RESTRICOES},s:function(v){RESTRICOES=v}},pedidos:{g:function(){return PED},s:function(v){PED=v}},flows:{g:function(){return FLO},s:function(v){FLO=v}},contratacoes:{g:function(){return LIC},s:function(v){LIC=v}},projetos:{g:function(){return PRJ},s:function(v){PRJ=v}}};
 function syncSubst(alvo,v){if(Array.isArray(alvo)){alvo.length=0;(v||[]).forEach(function(x){alvo.push(x)})}else{Object.keys(alvo).forEach(function(k){delete alvo[k]});Object.keys(v||{}).forEach(function(k){alvo[k]=v[k]})}}
 var SYNC_CFG={prazos_prj:{g:function(){return PRAZOS_PRJ},s:function(v){syncSubst(PRAZOS_PRJ,(v&&v.length===5)?v.slice(1):v)}},prazos_sup:{g:function(){return PRAZOS_SUP},s:function(v){syncSubst(PRAZOS_SUP,v)}},prazos_flow:{g:function(){return PRAZOS_FLOW},s:function(v){syncSubst(PRAZOS_FLOW,v)}},
@@ -1945,7 +2034,7 @@ function syncReq(metodo,caminho,corpo,extra){
 function syncBuscaTudo(filtro){
   var tudo=[],pag=1000;
   function pagina(ini){
-    return syncReq('GET','docs?select=colecao,id,ord,value,updated_at,deleted&order=updated_at.asc,colecao.asc,id.asc'+(filtro||''),undefined,{Range:ini+'-'+(ini+pag-1),'Range-Unit':'items'}).then(function(rows){rows=rows||[];tudo=tudo.concat(rows);return rows.length===pag?pagina(ini+pag):tudo});
+    return syncReq('GET','docs?select=colecao,id,ord,value,updated_at,deleted&obra=eq.'+encodeURIComponent(FRENTE)+'&order=updated_at.asc,colecao.asc,id.asc'+(filtro||''),undefined,{Range:ini+'-'+(ini+pag-1),'Range-Unit':'items'}).then(function(rows){rows=rows||[];tudo=tudo.concat(rows);return rows.length===pag?pagina(ini+pag):tudo});
   }
   return pagina(0);
 }
@@ -1990,7 +2079,7 @@ function syncOcupado(){
 function syncRedesenha(){if(syncOcupado()){SYNC.pendente=true;return}SYNC.pendente=false;render()}
 function syncAgenda(){if(!SYNC.ativo)return;clearTimeout(SYNC.timer);SYNC.timer=setTimeout(syncEmpurra,window.FGR_PUSH_MS||400)}
 function syncEmpurra(){
-  if(!SYNC.ativo)return;
+  if(!SYNC.ativo||SO_VER)return;
   if(SYNC.pushando){SYNC.denovo=true;return}
   var linhas=[],novos={},sumidos=[];
   Object.keys(SYNC_COLS).forEach(function(k){
@@ -1998,17 +2087,17 @@ function syncEmpurra(){
     arr.forEach(function(it){
       if(!it||!it.id)return;
       var ch=k+'/'+it.id,c=canon(it);vistos[ch]=1;
-      if(SYNC.snap[ch]!==c){if(!SYNC.ord[ch])SYNC.ord[ch]=Date.now()*1000+(SYNC.seq++);linhas.push({colecao:k,id:it.id,ord:SYNC.ord[ch],value:limpo(it),deleted:false});novos[ch]=c}
+      if(SYNC.snap[ch]!==c){if(!SYNC.ord[ch])SYNC.ord[ch]=Date.now()*1000+(SYNC.seq++);linhas.push({obra:FRENTE,colecao:k,id:it.id,ord:SYNC.ord[ch],value:limpo(it),deleted:false});novos[ch]=c}
     });
-    Object.keys(SYNC.snap).forEach(function(ch){if(ch.indexOf(k+'/')===0&&!vistos[ch]){linhas.push({colecao:k,id:ch.slice(k.length+1),ord:SYNC.ord[ch]||0,value:{},deleted:true});sumidos.push(ch)}});
+    Object.keys(SYNC.snap).forEach(function(ch){if(ch.indexOf(k+'/')===0&&!vistos[ch]){linhas.push({obra:FRENTE,colecao:k,id:ch.slice(k.length+1),ord:SYNC.ord[ch]||0,value:{},deleted:true});sumidos.push(ch)}});
   });
   Object.keys(SYNC_CFG).forEach(function(k){
     var ch='config/'+k,v=SYNC_CFG[k].g(),c=canon(v);
-    if(SYNC.snap[ch]!==c){linhas.push({colecao:'config',id:k,ord:0,value:limpo(v),deleted:false});novos[ch]=c}
+    if(SYNC.snap[ch]!==c){linhas.push({obra:FRENTE,colecao:'config',id:k,ord:0,value:limpo(v),deleted:false});novos[ch]=c}
   });
   if(!linhas.length)return;
   SYNC.pushando=true;
-  syncReq('POST','docs?on_conflict=colecao,id',linhas,{Prefer:'resolution=merge-duplicates,return=minimal'}).then(function(){
+  syncReq('POST','docs?on_conflict=obra,colecao,id',linhas,{Prefer:'resolution=merge-duplicates,return=minimal'}).then(function(){
     Object.keys(novos).forEach(function(ch){SYNC.snap[ch]=novos[ch]});
     sumidos.forEach(function(ch){delete SYNC.snap[ch]});
     SYNC.pushando=false;
@@ -2036,9 +2125,27 @@ window.fgrSyncStart=function(){
   if(SYNC.ativo||!window.fgrAuth)return;
   SYNC.ativo=true;SYNC.estado='carregando';avisoRender();
   var principal=$('#main');if(principal)principal.style.visibility='hidden';
-  syncBuscaTudo('').then(function(rows){
+  var meu=String(window.fgrAuth.email()||'').toLowerCase();
+  syncReq('GET','acessos?select=email,obra,nivel').then(function(ac){
+    ACESSO={admin:false,obras:{}};
+    (ac||[]).forEach(function(r){if(String(r.email).toLowerCase()!==meu)return;if(r.obra==='*'&&r.nivel==='admin')ACESSO.admin=true;else ACESSO.obras[r.obra]=r.nivel});
+    var ok=FRENTES.filter(function(f){return ACESSO.admin||ACESSO.obras[f]});
+    if(!ok.length){
+      SYNC.ativo=false;SYNC.estado='sem';avisoRender();
+      document.getElementById('nav').innerHTML='';$('#frente-box').innerHTML='';
+      if(principal){principal.style.visibility='';principal.innerHTML='<div class="cad-wrap"><div class="card cad-box"><h2>Sem acesso</h2><div class="m">Sua conta ('+restricaoEsc(meu)+') ainda não tem acesso a nenhuma obra deste painel. Peça a liberação para quem administra o painel.</div></div></div>'}
+      return null;
+    }
+    if(ok.indexOf(FRENTE)<0){lsSet('fgr_frente',ok[0]);location.reload();return null}
+    SO_VER=!ACESSO.admin&&ACESSO.obras[FRENTE]==='ver';
+    document.body.classList.toggle('so-ver',SO_VER);
+    if(ACESSO.admin&&!NAV.some(function(n){return n[0]==='acessos'}))NAV.push(['acessos','Acessos','sliders']);
+    frenteRender();
+    return syncBuscaTudo('');
+  }).then(function(rows){
+    if(rows===null)return;
     var total=RESTRICOES.length+PED.length+FLO.length+LIC.length+PRJ.length,manter=false;
-    if(rows.length===0&&total>0&&!EXEMPLO)manter=window.confirm('O banco compartilhado ainda está vazio. Enviar para ele os '+total+' itens que estão neste navegador, para todos verem?');
+    if(rows.length===0&&total>0&&!EXEMPLO&&!SO_VER)manter=window.confirm('O banco compartilhado ainda está vazio. Enviar para ele os '+total+' itens que estão neste navegador, para todos verem?');
     if(!manter)Object.keys(SYNC_COLS).forEach(function(k){SYNC_COLS[k].s([])});
     syncAplica(rows,true);
     SYNC.estado='ok';
@@ -2053,6 +2160,7 @@ window.fgrSyncStart=function(){
     avisoRender();
   });
 };
+frenteRender();
 render();
 })();
 </script>

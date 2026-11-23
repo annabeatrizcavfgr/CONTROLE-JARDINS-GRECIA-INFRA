@@ -129,3 +129,18 @@ O aviso amarelo traz um **detalhe** com o motivo:
 Depois de resolver, clique em **Tentar de novo** (ou recarregue a página).
 ### Segurança, em uma frase
 A tabela só aceita contas com e-mail `@fgr.com.br`/`@fgr.com` (regras no `01-schema.sql`). Qualquer pessoa da FGR que consiga entrar no Hydra conseguiria, tecnicamente, ler e gravar nessa tabela pela API, mesmo sem usar o painel. Se um dia for preciso restringir por obra ou por papel (como no app de metas, com planejador/coordenador/visualizador), o caminho é colocar um servidor no meio, o mesmo desenho do app de metas.
+
+## 9. Duas obras (INFRA e CASAS) e acessos por obra
+
+O painel tem as obras INFRA e CASAS, cada uma com os próprios dados. Quem pode ver ou editar cada uma é definido na tela **Acessos** (só administradora).
+
+**Ordem para publicar (importante):**
+1. No Studio (SQL Editor, New query), rode o arquivo `hydra/02-acessos.sql` inteiro. Confira antes o e-mail da administradora no fim do arquivo. Tudo o que já existe vira da obra INFRA; nada é apagado.
+2. Espere uns 5 a 15 minutos para a API enxergar a tabela nova (`acessos`), como aconteceu com a `docs`.
+3. Push origin e Redeploy no Coolify; Ctrl+F5 nas páginas abertas.
+
+**Se algo falhar:** o aviso "modo local" com `HTTP 404` ou `HTTP 403` em acessos/docs, depois de 15 minutos, quer dizer que a API ainda não liberou a tabela nova. Aí vale chamar o TI.
+
+**Níveis:** "Só visualiza" vê tudo da obra e não altera nada (o banco também recusa a gravação). "Pode editar" altera a obra. "Administradora" vê e altera as duas obras e mexe na tela Acessos. Quem entra com e-mail FGR e não está na lista vê "Sem acesso".
+
+**Trocar o endereço do painel:** o login só volta para endereços que estão na lista de Redirect URLs do Hydra. Se o endereço mudar, alguém precisa incluir o novo na lista (o TI fez isso para o endereço atual).
