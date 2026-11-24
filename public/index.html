@@ -546,8 +546,8 @@ body.so-ver button.chk{cursor:default}
 .tab.tbl td.grp-s svg{display:inline-block;vertical-align:middle}
 button.b.sec.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .tab.tbl.t-prj th:not(.stgh){padding-left:12px;padding-right:12px}
-.tab.tbl.t-prj th.stgh{width:104px;min-width:104px;font-size:10px;padding:8px 4px}
-.tab.tbl.t-prj td.stg{width:104px;min-width:104px;padding-left:4px;padding-right:4px}
+.tab.tbl.t-prj th.stgh{width:90px;min-width:90px;font-size:10px;padding:8px 3px}
+.tab.tbl.t-prj td.stg{width:90px;min-width:90px;padding-left:3px;padding-right:3px}
 .tab.tbl.t-prj td.stg .chk{width:26px;height:26px}
 .tab.tbl.t-prj td.stg .d{font-size:10.5px}
 .tema-btn{display:inline-grid;place-items:center;width:34px;height:34px;padding:0;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
@@ -1132,12 +1132,21 @@ function licExemplo(){return [
  {id:'l7',serv:'REVESTIMENTO CERÂMICO',sol:'Marina',idglpi:'4776',pedserv:'',tipo:'Aditivo de escopo',emerg:'Não',abertura:isoDe(2),necessidade:isoDe(-25),prazo:'',criada:isoDe(2),etapa:0,hist:mkHist(0,2),v:2}];}
 var LIC=licExemplo();
 /* controle de projetos: a equipe de projetos disponibiliza, a obra valida */
-var ETAPAS_PRJ=['Disponibilizado para a obra validar','Validado pela obra','Retorno da validação recebido','Projeto executivo disponibilizado'];
-var CURTO_PRJ=['Disponibilizado p/ validar','Validado pela obra','Retorno recebido','Executivo disponibilizado'];
-var COM_PRJ=['obra','projetos','projetos',''];               /* com quem está o próximo passo */
-var PROX_PRJ=['Validar até','Retornar até','Executivo até',''];
+var ETAPAS_PRJ=['Disponibilizado para a obra validar','Validado pela obra','Retorno da validação recebido','Retorno validado pela obra','Projeto executivo disponibilizado'];
+var CURTO_PRJ=['Disponibilizado p/ validar','Validado pela obra','Retorno recebido','Retorno validado pela obra','Executivo disponibilizado'];
+var COM_PRJ=['obra','projetos','obra','projetos',''];               /* com quem está o próximo passo */
+var PROX_PRJ=['Validar até','Retornar até','Validar retorno até','Executivo até',''];
+var ULT_PRJ=4;   /* última etapa de projetos (executivo disponibilizado) */
 function proxRotPrj(e){return e<0?'Disponibilizar até':PROX_PRJ[e]}
-var PRAZOS_PRJ=[15,5,7,10];
+var PRAZOS_PRJ=[15,5,7,5,10];
+/* prazos padrão gravados antes de existir a etapa "Retorno validado pela obra" (4 números, ou 5 do formato mais antigo) ganham o prazo novo (5 dias) na posição 3 */
+function convPrz(a,v){
+  if(!Array.isArray(a))return [15,5,7,5,10];
+  if(v===3&&a.length===5)return a.slice();
+  if(a.length===5)a=a.slice(1);
+  if(a.length===4)return [a[0],a[1],a[2],5,a[3]];
+  return [15,5,7,5,10];
+}
 /* validação de medições: cada medição passa pela conferência do planejamento, pelo gerente, vai ao empreiteiro e volta assinada */
 var ETAPAS_MED=['Conferência do planejamento','Solicitado aprovação do gerente','Aprovado pelo gerente','Enviado ao empreiteiro','Medição assinada'];
 var CURTO_MED=['Conferência planejamento','Solicitado aprovação gerente','Aprovado gerente','Enviado ao empreiteiro','Medição assinada'];
@@ -1148,15 +1157,23 @@ var MED=[];
 function migraPrj(it){
   if(!it)return false;
   var mudou=false;
-  if(it.fmt!==2){
+  if(!it.fmt||it.fmt<2){
     var e=Number(it.etapa);if(isNaN(e))e=-1;
     var h=it.hist||{},nh={};Object.keys(h).forEach(function(k){if(+k>=1)nh[+k-1]=h[k]});
     it.etapa=e<=0?-1:e-1;it.hist=nh;it.fmt=2;mudou=true;
   }
+  /* formato 3: entrou a etapa "Retorno validado pela obra" na posição 3; o executivo (antes 3) passou a ser 4, com a mesma data */
+  if(it.fmt===2){
+    var e3=Number(it.etapa);if(isNaN(e3))e3=-1;
+    var h3=it.hist||{},nh3={};Object.keys(h3).forEach(function(k){nh3[+k>=3?+k+1:+k]=h3[k]});
+    var pz3=it.prazos,np3;if(pz3){np3={};Object.keys(pz3).forEach(function(k){np3[+k>=3?+k+1:+k]=pz3[k]})}
+    if(e3>=3&&!nh3[3])nh3[3]=nh3[4]||nh3[2]||it.criada||hojeISO();   /* projeto que já estava concluído: a etapa nova fica marcada, com a data do executivo */
+    it.etapa=e3>=3?e3+1:e3;it.hist=nh3;if(np3)it.prazos=np3;it.fmt=3;mudou=true;
+  }
   /* "Previsão de entrega" virou a data da próxima etapa: a data que já estava digitada passa a ser a data da próxima etapa */
   if(it.prometida){
     var nx=Number(it.etapa)+1;
-    if(nx<4){it.prazos=it.prazos||{};if(!it.prazos[nx])it.prazos[nx]=it.prometida}
+    if(nx<=ULT_PRJ){it.prazos=it.prazos||{};if(!it.prazos[nx])it.prazos[nx]=it.prometida}
     it.prometida='';mudou=true;
   }
   return mudou;
@@ -1171,13 +1188,13 @@ var PRJ=[
  {id:'j6',n:'PAI-01',proj:'Paisagismo: áreas comuns',tip:'Condomínio 2',rev:'R00',resp:'Verde Paisagem',val:'Paulo',prometida:'',obs:'',criada:isoDe(20),etapa:1,hist:mkHist(1,9)},
  {id:'j7',n:'ESQ-02',proj:'Esquadrias: detalhamento',tip:'SB-4Q3S',rev:'R02',resp:'Alumifort',val:'Marina',prometida:'',obs:'',criada:isoDe(60),etapa:4,hist:mkHist(4,6)}];
 var DADOS_N=100;
-function save(){if(SO_VER)return;try{localStorage.setItem(STORE_KEY,JSON.stringify({R:RESTRICOES,P:PED,F:FLO,L:LIC,J:PRJ,M:MED,Z:PRAZOS_PRJ,Y:PRAZOS_SUP,W:PRAZOS_FLOW,C:CAD,xv:6,n:nextId,ex:EXEMPLO}))}catch(e){}
-  if(typeof SYNC!=='undefined'&&SYNC&&SYNC.ativo)syncAgenda();}(function(){try{var s=JSON.parse(localStorage.getItem(STORE_KEY)||'null');if(s&&s.R){RESTRICOES=s.R;PED=s.P;FLO=s.F;LIC=s.L||[];if(s.J)PRJ=s.J;if(s.M)MED=s.M;if(s.Z)PRAZOS_PRJ=s.Z;if(s.Y)PRAZOS_SUP=s.Y;if(s.W)PRAZOS_FLOW=s.W;if(s.C)['obras','tipos'].forEach(function(k){if(Array.isArray(s.C[k])){CAD[k].length=0;s.C[k].forEach(function(x){CAD[k].push(x)})}});nextId=s.n;EXEMPLO=!!s.ex;SAVED_XV=s.xv}}catch(e){}})();
+function save(){if(SO_VER)return;try{localStorage.setItem(STORE_KEY,JSON.stringify({R:RESTRICOES,P:PED,F:FLO,L:LIC,J:PRJ,M:MED,Z:PRAZOS_PRJ,zv:3,Y:PRAZOS_SUP,W:PRAZOS_FLOW,C:CAD,xv:6,n:nextId,ex:EXEMPLO}))}catch(e){}
+  if(typeof SYNC!=='undefined'&&SYNC&&SYNC.ativo)syncAgenda();}(function(){try{var s=JSON.parse(localStorage.getItem(STORE_KEY)||'null');if(s&&s.R){RESTRICOES=s.R;PED=s.P;FLO=s.F;LIC=s.L||[];if(s.J)PRJ=s.J;if(s.M)MED=s.M;if(s.Z)PRAZOS_PRJ=convPrz(s.Z,s.zv);if(s.Y)PRAZOS_SUP=s.Y;if(s.W)PRAZOS_FLOW=s.W;if(s.C)['obras','tipos'].forEach(function(k){if(Array.isArray(s.C[k])){CAD[k].length=0;s.C[k].forEach(function(x){CAD[k].push(x)})}});nextId=s.n;EXEMPLO=!!s.ex;SAVED_XV=s.xv}}catch(e){}})();
 /* versão de uso real: sem dados de exemplo; só existe o que a pessoa cadastrar neste navegador */
 (function(){var tem=false;try{tem=!!localStorage.getItem(STORE_KEY)}catch(e){}if(!tem){RESTRICOES=[];PED=[];FLO=[];LIC=[];PRJ=[];MED=[];if(FRENTE!=='INFRA')CAD.obras.length=0}EXEMPLO=false})();
 /* itens de exemplo recebem uma obra; os que a usuária cadastrou ficam sem obra até ela escolher */
 (function(){[[PED,/^p[0-9]$/],[LIC,/^l[0-9]$/]].forEach(function(g){g[0].forEach(function(x,i){if(x.obra===undefined&&g[1].test(x.id))x.obra=CAD.obras.length?CAD.obras[i%CAD.obras.length]:''})})})();
-PRJ.forEach(migraPrj);if(PRAZOS_PRJ.length===5)PRAZOS_PRJ=PRAZOS_PRJ.slice(1);
+PRJ.forEach(migraPrj);
 LIC.forEach(function(l){if(!l.tipo)l.tipo='Contratação';if(/^Aditivo/.test(l.tipo))l.emerg='Não'});
 var PZ_PADRAO={'Contratação':[30,15],'Aditivo de escopo':[15],'Aditivo de quantidade':[10],'Aditivo de prazo':[7]};
 TIPOS_CONTR.forEach(function(t){if(!PRAZOS_SUP[t])PRAZOS_SUP[t]=PZ_PADRAO[t].slice();if(t!=='Contratação')PRAZOS_SUP[t]=[PRAZOS_SUP[t][0]]});
@@ -1280,21 +1297,21 @@ function tLic(){return LIC.map(function(l){
 /* datas previstas das etapas que ainda não aconteceram: prazo padrão a partir da última etapa marcada; a data prometida vale para a próxima entrega da equipe de projetos */
 function prevPrj(p){
   var a=[],cur=(p.etapa<0?p.criada:(p.hist[p.etapa]||p.criada)),com=p.etapa<0?'projetos':COM_PRJ[p.etapa];
-  for(var i=p.etapa+1;i<4;i++){
+  for(var i=p.etapa+1;i<=ULT_PRJ;i++){
     var man=p.prazos&&p.prazos[i];
     if(man)cur=man;else cur=addDias(cur,PRAZOS_PRJ[i]);
     a[i]=cur;
   }
   return a;
 }/* "Previsão de entrega" = data prevista da PRÓXIMA etapa (a calculada pelos prazos ou a que a pessoa definiu); vazia quando o projeto está concluído */
-function proxData(r){return (r.etapa<3?prevPrj(r)[r.etapa+1]:'')||''}
+function proxData(r){return (r.etapa<ULT_PRJ?prevPrj(r)[r.etapa+1]:'')||''}
 function prazoProx(it,v){
-  var nx=Number(it.etapa)+1;if(nx>3)return;
+  var nx=Number(it.etapa)+1;if(nx>ULT_PRJ)return;
   if(!v){if(it.prazos){delete it.prazos[nx];if(!Object.keys(it.prazos).length)delete it.prazos}}
   else{it.prazos=it.prazos||{};it.prazos[nx]=v}
 }
 function tPrj(){return PRJ.map(function(p,i){
-  var prev=prevPrj(p),prox=prev[p.etapa+1],atr=!!(prox&&prox<hojeISO()),com=p.etapa<0?'projetos':COM_PRJ[p.etapa],feito=p.etapa>=3;
+  var prev=prevPrj(p),prox=prev[p.etapa+1],atr=!!(prox&&prox<hojeISO()),com=p.etapa<0?'projetos':COM_PRJ[p.etapa],feito=p.etapa>=ULT_PRJ;
   var promAtr=p.prometida&&!feito&&com==='projetos'&&p.prometida<hojeISO();
   return {id:p.id,cor:corIdx(i),g:'prj',raw:p,estado:atr?'bad':'',prev:prev,
     sit:feito?'concluidos':com,
@@ -1343,7 +1360,7 @@ function grupoResumoHtml(g,ordem,fechado){
   var its=g.itens,N=its.length,hoje=hojeISO();
   var vals=uniq(its.map(function(x){return String(x.raw.val||'').trim()}));
   var datas=[],atras=0,abertos=0;
-  its.forEach(function(x){var r=x.raw;if(r.etapa<3){abertos++;var d=proxData(r);if(d){datas.push(d);if(d<hoje)atras++}}});
+  its.forEach(function(x){var r=x.raw;if(r.etapa<ULT_PRJ){abertos++;var d=proxData(r);if(d){datas.push(d);if(d<hoje)atras++}}});
   datas.sort();
   var prox=!abertos?chip('Concluídos','ok'):'<span class="m" style="display:block;margin-bottom:2px">Data mais próxima</span><b>'+(datas[0]?fmtDate2(datas[0]):'—')+'</b>'+(atras?' '+chip(atras+(atras>1?' atrasados':' atrasado'),'bad'):'')+sub(abertos+' de '+N+' em andamento');
   return '<tr class="grp-h" style="--c:'+its[0].cor+'">'+ordem.map(function(o){
@@ -1405,7 +1422,7 @@ var CFG={
   seg:[['todas','Todos']],etapaTopo:true,
   extraBtn:function(u){return '<button class="b sec sm" data-act="pz" aria-expanded="'+!!u.pz+'">Prazos padrão</button><button class="b sec sm'+(u.agrupar?' on':'')+'" data-act="agrupar" aria-pressed="'+!!u.agrupar+'" title="Junta os projetos de mesma disciplina (mesmo nome) num grupo, com um resumo">Agrupar por disciplina</button>'},
   filtros:function(){return [['status','Etapa',opts2(['Pendente com a equipe de projetos'].concat(ETAPAS_PRJ))],['val','Responsável validação',opts2(uniq(PRJ.map(function(p){return p.val})))],['tip','Tipologia / área',opts2(uniq(PRJ.map(function(p){return p.tip})))]]},
-  nota:'Pendente com a equipe de projetos: ainda sem projeto, ou aguardando retorno da validação ou o executivo. Pendente com a obra: projeto disponibilizado esperando validação. Os números em itálico são as datas previstas pelos prazos padrão; clique em qualquer data para mudá-la (sem itálico, a data foi definida por você).',
+  nota:'Pendente com a equipe de projetos: ainda sem projeto, ou aguardando retorno da validação ou o executivo. Pendente com a obra: projeto disponibilizado esperando validação, ou retorno recebido esperando a validação da obra. Os números em itálico são as datas previstas pelos prazos padrão; clique em qualquer data para mudá-la (sem itálico, a data foi definida por você).',
   campos:[['proj','Projeto / disciplina *','text',null,'Ex.: Hidráulica: ramais e prumadas',1],['tip','Tipologia / área','text',null,'Ex.: SB-4Q3S'],['rev','Revisão','text',null,'Ex.: R01'],['val','Responsável pela validação','text','PESSOAS','Ex.: Viktor'],['etapa','Etapa atual','etapaN',ETAPAS_PRJ,'Pendente com a equipe de projetos'],['criada','Data da solicitação','date'],['obs','Observação','area',null,'',1]],
   vazio:function(){return {proj:'',n:'',tip:'',rev:'',resp:'',val:'',prometida:'',obs:'',etapa:-1,criada:hojeISO()}},obrig:['proj'],prefixo:'j'},
  medicoes:{lista:function(){return MED},itens:tMed,rotulo:['medição','medições'],novo:'Nova medição',grade:true,busca:'Buscar por contrato, nº da medição, engenheiro, obra ou código',
@@ -1521,9 +1538,9 @@ function barraHtml(k){
    +(ativos.length?'<div class="fchips">'+ativos.map(function(f){return '<span class="chip acc">'+f[1]+': '+restricaoEsc(nomeOpt(f,u.f[f[0]]))+' <button class="ic" style="padding:0 0 0 2px" data-act="rm" data-v="'+f[0]+'" aria-label="Remover filtro '+f[1]+'">✕</button></span>'}).join('')+'<button class="ex-link" data-act="limpar" style="font-size:12px">Limpar tudo</button></div>':'')+'</div>';
 }
 function prazosHtml(){
-  var rot=['Projetos disponibiliza o projeto (a contar da solicitação)','Obra valida o projeto (a contar da disponibilização)','Projetos dá o retorno da validação (a contar da validação)','Projetos disponibiliza o executivo (a contar do retorno)'];
+  var rot=['Projetos disponibiliza o projeto (a contar da solicitação)','Obra valida o projeto (a contar da disponibilização)','Projetos dá o retorno da validação (a contar da validação)','Obra valida o retorno (a contar do retorno recebido)','Projetos disponibiliza o executivo (a contar da validação do retorno)'];
   return '<div class="card"><h2>Prazos padrão por etapa</h2><div class="m" style="margin-bottom:10px">Dias que cada etapa deve levar a partir da anterior. Servem para calcular a data prevista das etapas que ainda não aconteceram. Quando a equipe de projetos promete uma data, ela vale para a próxima entrega dela.</div><div class="fgrid">'
-   +[0,1,2,3].map(function(i){return '<div class="campo"><label for="pz-'+i+'">'+rot[i]+'</label><input id="pz-'+i+'" type="number" min="0" value="'+PRAZOS_PRJ[i]+'"></div>'}).join('')
+   +[0,1,2,3,4].map(function(i){return '<div class="campo"><label for="pz-'+i+'">'+rot[i]+'</label><input id="pz-'+i+'" type="number" min="0" value="'+PRAZOS_PRJ[i]+'"></div>'}).join('')
    +'</div><div class="acoes"><button class="b" data-act="salvar-prazos">Salvar prazos</button><button class="b sec" data-act="pz">Fechar</button></div></div>';
 }
 function prazosSupHtml(){
@@ -1554,7 +1571,7 @@ var GRADES={
   projetos:{botao:'Adicionar projetos',titulo:'Adicionar projetos',rot:'projeto(s)',dica:'Só o <b>Projeto</b> é obrigatório',
     cols:[{k:'proj',l:'Projeto / disciplina *',w:'34%'},{k:'tip',l:'Tipologia / área',w:'18%'},{k:'rev',l:'Revisão',w:'10%'},{k:'val',l:'Responsável pela validação',w:'22%',lista:'dl-pessoas'},{k:'prometida',l:'Previsão de entrega',w:'16%',t:'data'}],
     faltam:function(r){var e={};if(!String(r.proj).trim())e.proj=1;return e},
-    cria:function(r,h){return {id:novoId('j'),proj:String(r.proj).trim(),tip:String(r.tip).trim(),rev:String(r.rev).trim(),resp:'',val:String(r.val).trim(),prazos:gradeD0(r.prometida),obs:'',criada:h,etapa:-1,hist:{},v:2,fmt:2}}},
+    cria:function(r,h){return {id:novoId('j'),proj:String(r.proj).trim(),tip:String(r.tip).trim(),rev:String(r.rev).trim(),resp:'',val:String(r.val).trim(),prazos:gradeD0(r.prometida),obs:'',criada:h,etapa:-1,hist:{},v:2,fmt:3}}},
   flows:{botao:'Adicionar aditivos',titulo:'Adicionar aditivos (flows)',rot:'aditivo(s)',dica:'Só o <b>Aditivo</b> é obrigatório',
     cols:[{k:'n',l:'Aditivo *',w:'26%'},{k:'idfm',l:'ID no FlowMaster',w:'9%'},{k:'origem',l:'Aberto por',w:'10%',t:'sel',op:['Obra','Orçamento'],def:'Obra'},{k:'obra',l:'Obra',w:'11%',t:'sel',op:function(){return ['']['concat'](CAD.obras)},vr:'(sem obra)'},{k:'sol',l:'Solicitante',w:'13%',lista:'dl-pessoas'},{k:'motivo',l:'Motivo',w:'18%',t:'sel',op:function(){return MOTIVOS_FLOW},def:'Não informado'},{k:'desvio',l:'Está em',w:'13%',t:'sel',op:['Fluxo padrão','Projetos','Suprimentos'],def:'Fluxo padrão'}],
     faltam:function(r){var e={};if(!String(r.n).trim())e.n=1;return e},
@@ -1693,7 +1710,7 @@ document.addEventListener('click',function(e){
   else if(act==='pz')u.pz=!u.pz;
   else if(act==='salvar-prazos-flow'){['orc','obra','plan','proj','sup'].forEach(function(k){var el=document.getElementById('pzf-'+k);if(el)PRAZOS_FLOW[k]=Math.max(0,Number(el.value)||0)});u.pz=false;toast('Prazos padrão salvos.')}
   else if(act==='salvar-prazos-sup'){TIPOS_CONTR.forEach(function(t,i){[0,1].forEach(function(j){var el=document.getElementById('pzs-'+i+'-'+j);if(el)PRAZOS_SUP[t][j]=Math.max(0,Number(el.value)||0)})});u.pz=false;toast('Prazos padrão salvos.')}
-  else if(act==='salvar-prazos'){[0,1,2,3].forEach(function(i){var el=document.getElementById('pz-'+i);if(el)PRAZOS_PRJ[i]=Math.max(0,Number(el.value)||0)});u.pz=false;toast('Prazos padrão salvos.')}
+  else if(act==='salvar-prazos'){[0,1,2,3,4].forEach(function(i){var el=document.getElementById('pz-'+i);if(el)PRAZOS_PRJ[i]=Math.max(0,Number(el.value)||0)});u.pz=false;toast('Prazos padrão salvos.')}
   else if(act==='novo'){u.form={id:null,v:cfg.vazio()}}
   else if(act==='editar'){var x=achar(v);if(!x)return;u.form={id:v,v:JSON.parse(JSON.stringify(x))}}
   else if(act==='cancelar')u.form=null;
@@ -1701,7 +1718,7 @@ document.addEventListener('click',function(e){
     var sc=cfg,r=lerForm(sc);if(r.falta.length){toast('Preencha: '+r.falta.join(', ')+'.');return}
     var o=r.o,alvo=u.form.id?achar(u.form.id):null;
     if(alvo){var novaEtapa=o.etapa;delete o.etapa;Object.keys(o).forEach(function(key){alvo[key]=o[key]});if(novaEtapa!==alvo.etapa)setEtapa(alvo,novaEtapa);toast('Alterações salvas.')}
-    else{var n=Object.assign({id:novoId(sc.prefixo),hist:{},v:2,criada:hojeISO()},o);if(sc.prefixo==='j')n.fmt=2;var est=n.etapa;n.etapa=0;n.hist={0:n.criada||hojeISO()};if(est>0)setEtapa(n,est);if(est<0){n.etapa=-1;n.hist={}}sc.lista().push(n);toast('Incluído.');u.seg='todas'}
+    else{var n=Object.assign({id:novoId(sc.prefixo),hist:{},v:2,criada:hojeISO()},o);if(sc.prefixo==='j')n.fmt=3;var est=n.etapa;n.etapa=0;n.hist={0:n.criada||hojeISO()};if(est>0)setEtapa(n,est);if(est<0){n.etapa=-1;n.hist={}}sc.lista().push(n);toast('Incluído.');u.seg='todas'}
     u.form=null;
   }
   else if(act==='excluir')u.del=v;
@@ -1845,7 +1862,7 @@ function hojeDados(){
   fl.sort(function(a,b){return b.al.atraso-a.al.atraso});
   var lc=[];LIC.forEach(function(l){if(!mObra(l.obra)||l.etapa>=2)return;var pz=l.prazo||prazoSup(l);if(pz&&pz<hj)lc.push({l:l,pz:pz,atraso:diasDesde(pz)})});
   lc.sort(function(a,b){return b.atraso-a.atraso});
-  var pj=[];PRJ.forEach(function(p){if(p.etapa>=3)return;
+  var pj=[];PRJ.forEach(function(p){if(p.etapa>=ULT_PRJ)return;
     var prox=prevPrj(p)[p.etapa+1],com=p.etapa<0?'projetos':COM_PRJ[p.etapa],atr=!!(prox&&prox<hj),prom=false;
     if(atr||prom)pj.push({p:p,prox:prox,com:com,prom:prom,atraso:diasDesde(prom?p.prometida:prox)})});
   pj.sort(function(a,b){return b.atraso-a.atraso});
@@ -1887,7 +1904,7 @@ function renderHoje(){
   flo.forEach(normFlow);
   function n(a,fn){return a.filter(fn).length}
   var pedAnd=n(ped,function(p){return p.etapa<6}),floAnd=n(flo,function(f){return f.etapa<7}),licAnd=n(lic,function(l){return l.etapa<3});
-  var prjAb=PRJ.filter(function(p){return p.etapa<3}),prjObra=n(prjAb,function(p){return COM_PRJ[p.etapa]==='obra'}),prjProj=prjAb.length-prjObra,prjFim=PRJ.length-prjAb.length;
+  var prjAb=PRJ.filter(function(p){return p.etapa<ULT_PRJ}),prjObra=n(prjAb,function(p){return COM_PRJ[p.etapa]==='obra'}),prjProj=prjAb.length-prjObra,prjFim=PRJ.length-prjAb.length;
   var gAll=restV(),gAb=gAll.filter(function(r){return r.status!=='resolvido'});
   var gCls={hi:0,md:0,lo:0,none:0};gAb.forEach(function(r){gCls[restricaoClsKey(restricaoCls(r))]++});
   var gSt={aberto:0,em_andamento:0,resolvido:0};gAll.forEach(function(r){gSt[restricaoStatusKey(r.status)]++});
@@ -1920,7 +1937,7 @@ function renderHoje(){
    +'<div class="m">Para cobrar: pedidos que ainda não têm responsável; flows com o prazo da área vencido; contratações com prazo vencido antes de "Contratação concluída"; projetos com prazo ou previsão de entrega vencidos; restrições da Matriz GUT em aberto com prazo vencido.</div>';
 }function shell(){
   document.getElementById('nav').innerHTML=NAV.map(function(n){
-    var bd=n[0]==='hoje'?hojeDados().total:(n[0]==='cadastros'||n[0]==='acessos')?0:n[0]==='restricoes'?RESTRICOES.filter(function(r){return r.status!=='resolvido'}).length:n[0]==='pedidos'?PED.filter(function(p){return p.etapa<6&&mObra(p.obra)}).length:n[0]==='projetos'?PRJ.filter(function(p){return p.etapa<3}).length:n[0]==='medicoes'?MED.filter(function(m){return m.etapa<4}).length:n[0]==='flows'?FLO.filter(function(f){return f.etapa<7&&mObra(f.obra)}).length:LIC.filter(function(l){return l.etapa<3&&mObra(l.obra)}).length;
+    var bd=n[0]==='hoje'?hojeDados().total:(n[0]==='cadastros'||n[0]==='acessos')?0:n[0]==='restricoes'?RESTRICOES.filter(function(r){return r.status!=='resolvido'}).length:n[0]==='pedidos'?PED.filter(function(p){return p.etapa<6&&mObra(p.obra)}).length:n[0]==='projetos'?PRJ.filter(function(p){return p.etapa<ULT_PRJ}).length:n[0]==='medicoes'?MED.filter(function(m){return m.etapa<4}).length:n[0]==='flows'?FLO.filter(function(f){return f.etapa<7&&mObra(f.obra)}).length:LIC.filter(function(l){return l.etapa<3&&mObra(l.obra)}).length;
     return '<button class="nv'+(CURRENT_SCREEN===n[0]?' on':'')+'" data-tab="'+n[0]+'"'+(CURRENT_SCREEN===n[0]?' aria-current="page"':'')+'>'+ic(n[2])+'<span>'+n[1]+'</span>'+(bd?'<span class="bd">'+bd+'</span>':'')+'</button>'}).join('');
   $('#titulo').textContent=TITULOS[CURRENT_SCREEN][0];$('#subtitulo').textContent=TITULOS[CURRENT_SCREEN][1];
   $('#side').classList.remove('aberto');$('#scrim').classList.remove('on');
@@ -2078,7 +2095,7 @@ var SYNC_COLS={restricoes:{g:function(){return RESTRICOES},s:function(v){RESTRIC
 /* a chave do banco é (colecao, id) para o painel todo; por isso as configurações da obra CASAS ganham o sufixo @CASAS */
 function cfgId(k){return FRENTE==='INFRA'?k:k+'@'+FRENTE}
 function syncSubst(alvo,v){if(Array.isArray(alvo)){alvo.length=0;(v||[]).forEach(function(x){alvo.push(x)})}else{Object.keys(alvo).forEach(function(k){delete alvo[k]});Object.keys(v||{}).forEach(function(k){alvo[k]=v[k]})}}
-var SYNC_CFG={prazos_prj:{g:function(){return PRAZOS_PRJ},s:function(v){syncSubst(PRAZOS_PRJ,(v&&v.length===5)?v.slice(1):v)}},prazos_sup:{g:function(){return PRAZOS_SUP},s:function(v){syncSubst(PRAZOS_SUP,v)}},prazos_flow:{g:function(){return PRAZOS_FLOW},s:function(v){syncSubst(PRAZOS_FLOW,v)}},
+var SYNC_CFG={prazos_prj:{g:function(){return {v:3,d:PRAZOS_PRJ}},s:function(v){var d=Array.isArray(v)?convPrz(v,2):((v&&Array.isArray(v.d))?convPrz(v.d,3):null);if(d)syncSubst(PRAZOS_PRJ,d)}},prazos_sup:{g:function(){return PRAZOS_SUP},s:function(v){syncSubst(PRAZOS_SUP,v)}},prazos_flow:{g:function(){return PRAZOS_FLOW},s:function(v){syncSubst(PRAZOS_FLOW,v)}},
   cad:{g:function(){return {obras:CAD.obras,tipos:CAD.tipos}},s:function(v){['obras','tipos'].forEach(function(k){if(v&&Array.isArray(v[k]))syncSubst(CAD[k],v[k])})}}};
 /* forma "canônica" para comparar (ordem das chaves não importa; campos que começam com _ são só da tela e não vão) */
 function canon(v){
