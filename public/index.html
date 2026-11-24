@@ -1070,12 +1070,23 @@ var PRAZOS_FLOW={orc:5,obra:3,plan:5,proj:7,sup:7};   /* dias que cada área tem
 var AREA_KEY={'Obra':'obra','Orçamento':'orc','Planejamento':'plan','Projetos':'proj','Suprimentos':'sup'};
 /* alerta de cobrança: aparece no dia do prazo e em todos os dias seguintes, no círculo da etapa atual */
 function alertaFlow(f){
-  if(f.etapa<3||f.etapa>=7)return null;
-  var area=ondeFlow(f),dias=PRAZOS_FLOW[AREA_KEY[area]],desv=!!(f.desvio&&f.desvio!=='Fluxo padrão');
+  if(f.etapa>=7)return null;
+  var desv=!!(f.desvio&&f.desvio!=='Fluxo padrão');
+  var pe=prazoEntregaFlow(f);   /* flow aberto pelo orçamento e ainda não iniciado: o prazo conta da criação */
+  if(pe)return pe.due<=hojeISO()?{i:3,atraso:diasDesde(pe.due),due:pe.due,area:'Orçamento',dias:pe.dias}:null;
+  if(f.etapa<3)return null;
+  var area=ondeFlow(f),dias=PRAZOS_FLOW[AREA_KEY[area]];
   var ini=desv?(f.desvioDesde||f.hist[f.etapa]):f.hist[f.etapa];
   if(!ini||dias==null)return null;
   var due=addDiasSup(ini,dias);
   return due<=hojeISO()?{i:f.etapa,atraso:diasDesde(due),due:due,area:area,dias:dias}:null;
+}
+/* data de entrega do orçamento calculada sozinha: criação + prazo padrão da área (vale quando o orçamento abriu o flow e ainda não marcou a etapa Orçamento) */
+function prazoEntregaFlow(f){
+  if(f.origem!=='Orçamento'||f.etapa>=3||(f.desvio&&f.desvio!=='Fluxo padrão'))return null;
+  if(f.prazoOrc)return {due:f.prazoOrc,dias:null,manual:true};
+  var dias=PRAZOS_FLOW.orc;if(dias==null||!f.criada)return null;
+  return {due:addDiasSup(f.criada,dias),dias:dias};
 }
 var MOTIVOS_FLOW=['Não informado','Metodologia executiva','Consumo subestimado','Compra/Contratação emergencial','Omissão em orçamento','Revisão de projeto executivo','Baixa produtividade','Outro'];
 function flowsExemplo(){return [
@@ -1248,6 +1259,7 @@ function tFlo(){return FLO.map(function(f,i){
   var fim=f.etapa>=7,desv=!!(f.desvio&&f.desvio!=='Fluxo padrão'),onde=ondeFlow(f); var al=alertaFlow(f);
   return {id:f.id,cor:corIdx(i),g:'flo',raw:f,estado:al?'bad':((desv&&!fim)?'info':''),sit:fim?'concluidos':'andamento',sit2:al?'atraso':'',alert:al,
     na:f.origem==='Orçamento'?[true,true,true]:null,
+    prev:(function(){var pe=prazoEntregaFlow(f),p={};if(pe)p[3]=pe.due;return p})(),
     f:{obra:f.obra,onde:onde,motivo:f.motivo,sol:f.sol,origem:f.origem},
     txt:[f.n,f.idfm,f.obra,f.sol,f.motivo,onde,f.origem].join(' '),
     gut:fim?'':gutBtn('Aditivo','','Aditivo '+(f.idfm?'#'+f.idfm+' ':'')+f.n,f.sol),
@@ -1309,7 +1321,7 @@ function stageCell(grupo,x,i){
   var r=x.raw,est=r.etapa,n=GRUPOS[grupo].labels[i];
   if(x.na&&x.na[i])return '<td class="stg"><span class="chk na" title="Não se aplica: o orçamento abriu este flow">–</span><span class="d"></span></td>';
   var ok=i<=est,cur=i===est,dt=(x.dt&&x.dt[i]!==undefined)?x.dt[i]:r.hist[i],editavel=!(x.dt&&x.dt[i]!==undefined);
-  var al=x.alert&&x.alert.i===i;return '<td class="stg">'+(al?'<span class="chkw">':'')+'<button class="chk'+(ok?' on':'')+(cur?' cur':'')+(cur&&x.estado?' '+x.estado:'')+(ok&&GRUPOS[grupo].tons&&GRUPOS[grupo].tons[i]?' '+GRUPOS[grupo].tons[i]:'')+'" data-act="etapa" data-id="'+x.id+'" data-v="'+i+'" title="Marcar como '+n+'" aria-label="'+n+(ok?' (concluído)':'')+'">'+(ok?CHECK:'')+'</button>'+(al?'<span class="al-dot" title="'+restricaoEsc('Prazo de '+x.alert.area+' venceu em '+fmtDate2(x.alert.due)+(x.alert.atraso>0?' ('+x.alert.atraso+' dia(s) de atraso)':' (vence hoje)')+': cobrar')+'">'+(x.alert.atraso>0?'+'+x.alert.atraso:'!')+'</span></span>':'')+(ok?'<span class="d'+(editavel?' ed':'')+'"'+(editavel?' data-etdt="'+x.id+'" data-v="'+i+'" title="Clique para ajustar a data"':'')+'>'+fd(dt)+'</span>':(x.prev&&x.prev[i]?'<span class="d '+((x.g==='prj'&&x.raw.prazos&&x.raw.prazos[i])?'man':'prev')+(x.prev[i]<hojeISO()?' late':'')+(x.g==='prj'?' ed" data-etprev="'+x.id+'" data-v="'+i+'" title="'+((x.raw.prazos&&x.raw.prazos[i])?'Data definida por você. Clique para mudar':'Data prevista. Clique para definir a sua')+'">':'" title="Data prevista">')+fd(x.prev[i])+'</span>':'<span class="d"></span>'))+quickAt(grupo,x,i)+'</td>';
+  var al=x.alert&&x.alert.i===i;return '<td class="stg">'+(al?'<span class="chkw">':'')+'<button class="chk'+(ok?' on':'')+(cur?' cur':'')+(cur&&x.estado?' '+x.estado:'')+(ok&&GRUPOS[grupo].tons&&GRUPOS[grupo].tons[i]?' '+GRUPOS[grupo].tons[i]:'')+'" data-act="etapa" data-id="'+x.id+'" data-v="'+i+'" title="Marcar como '+n+'" aria-label="'+n+(ok?' (concluído)':'')+'">'+(ok?CHECK:'')+'</button>'+(al?'<span class="al-dot" title="'+restricaoEsc('Prazo de '+x.alert.area+' venceu em '+fmtDate2(x.alert.due)+(x.alert.atraso>0?' ('+x.alert.atraso+' dia(s) de atraso)':' (vence hoje)')+': cobrar')+'">'+(x.alert.atraso>0?'+'+x.alert.atraso:'!')+'</span></span>':'')+(ok?'<span class="d'+(editavel?' ed':'')+'"'+(editavel?' data-etdt="'+x.id+'" data-v="'+i+'" title="Clique para ajustar a data"':'')+'>'+fd(dt)+'</span>':(x.prev&&x.prev[i]?'<span class="d '+(((x.g==='prj'&&x.raw.prazos&&x.raw.prazos[i])||(x.g==='flo'&&x.raw.prazoOrc))?'man':'prev')+(x.prev[i]<hojeISO()?' late':'')+((x.g==='prj'||x.g==='flo')?' ed" data-etprev="'+x.id+'" data-v="'+i+'" title="'+(((x.g==='prj'&&x.raw.prazos&&x.raw.prazos[i])||(x.g==='flo'&&x.raw.prazoOrc))?'Data de entrega definida por você. Clique para mudar':'Data prevista. Clique para definir a data de entrega')+'">':'" title="Data prevista">')+fd(x.prev[i])+'</span>':'<span class="d"></span>'))+quickAt(grupo,x,i)+'</td>';
 }
 function stageCells(grupo,x){return GRUPOS[grupo].labels.map(function(n,i){return stageCell(grupo,x,i)}).join('')}
 /* campo preenchido na própria linha: fica embaixo do check da etapa a que pertence (ou no lugar de uma coluna de informação) */
@@ -1784,7 +1796,11 @@ document.addEventListener('click',function(e){
 /* ---------- projetos: mudar a data prevista de qualquer etapa que ainda não foi feita (clicar na data embaixo do círculo) ----------
    A data que você define vale no lugar da calculada pelos prazos padrão e as etapas seguintes passam a contar a partir dela. */
 document.addEventListener('click',function(e){
-  var s=e.target.closest&&e.target.closest('[data-etprev]');if(!s||CURRENT_SCREEN!=='projetos')return;
+  var s=e.target.closest&&e.target.closest('[data-etprev]');if(!s)return;
+  if(CURRENT_SCREEN==='flows'){var fl=FLO.filter(function(x){return x.id===s.dataset.etprev})[0];if(!fl)return;
+    var pe=prazoEntregaFlow(fl);
+    restricaoAbreData(s,'Data de entrega do orçamento',(pe&&pe.due)||'',function(v){if(v)fl.prazoOrc=v;else delete fl.prazoOrc;renderOutras()});return}
+  if(CURRENT_SCREEN!=='projetos')return;
   var it=PRJ.filter(function(x){return x.id===s.dataset.etprev})[0];if(!it)return;
   var i=+s.dataset.v,lab=GRUPOS.prj.labels[i];
   var atual=(it.prazos&&it.prazos[i])||prevPrj(it)[i]||'';
