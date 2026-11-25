@@ -132,16 +132,16 @@ A tabela só aceita contas com e-mail `@fgr.com.br`/`@fgr.com` (regras no `01-sc
 
 ## 9. Duas obras (INFRA e CASAS) e acessos por obra
 
-O painel tem as obras INFRA e CASAS, cada uma com os próprios dados. Quem pode ver ou editar cada uma é definido na tela **Cadastros**, no quadro "Quem pode acessar" (só administradora).
+O painel tem as obras INFRA e CASAS, cada uma com os próprios dados. Quem pode ver ou editar cada uma é definido na tela **Cadastros**, no quadro "Quem pode acessar" (só administrador).
 
 **Ordem para publicar (importante):**
-1. No Studio (SQL Editor, New query), rode o arquivo `hydra/02-acessos.sql` inteiro. Confira antes o e-mail da administradora no fim do arquivo. Tudo o que já existe vira da obra INFRA; nada é apagado.
+1. No Studio (SQL Editor, New query), rode o arquivo `hydra/02-acessos.sql` inteiro. Confira antes o e-mail do administrador no fim do arquivo. Tudo o que já existe vira da obra INFRA; nada é apagado.
 2. Espere uns 5 a 15 minutos para a API enxergar a tabela nova (`acessos`), como aconteceu com a `docs`.
 3. Push origin e Redeploy no Coolify; Ctrl+F5 nas páginas abertas.
 
 **Se algo falhar:** o aviso "modo local" com `HTTP 404` ou `HTTP 403` em acessos/docs, depois de 15 minutos, quer dizer que a API ainda não liberou a tabela nova. Aí vale chamar o TI.
 
-**Níveis:** "Só visualiza" vê tudo da obra e não altera nada (o banco também recusa a gravação). "Pode editar" altera a obra. "Administradora" vê e altera as duas obras e mexe na tela Acessos. Quem entra com e-mail FGR e não está na lista vê "Sem acesso".
+**Níveis:** "Só visualiza" vê tudo da obra e não altera nada (o banco também recusa a gravação). "Pode editar" altera a obra. "Administrador" vê e altera as duas obras e mexe na tela Acessos. Quem entra com e-mail FGR e não está na lista vê "Sem acesso".
 
 **Trocar o endereço do painel:** o login só volta para endereços que estão na lista de Redirect URLs do Hydra. Se o endereço mudar, alguém precisa incluir o novo na lista (o TI fez isso para o endereço atual).
 
@@ -151,7 +151,7 @@ O painel tem as obras INFRA e CASAS, cada uma com os próprios dados. Quem pode 
 
 Quem entra com a conta FGR e ainda não tem acesso vê a tela "Sem acesso", escolhe a obra e clica em "Solicitar acesso". Enquanto espera, a tela confere sozinha a cada 1 minuto se já foi aprovada e abre o painel quando for.
 
-As administradoras veem uma bolinha com o número de pedidos no menu "Cadastros", no quadro "Quem pode acessar" e no título da aba do navegador, e um aviso ao entrar e a cada novo pedido (o painel confere a cada 1 minuto). No quadro de acessos, no fim da tela **Cadastros**, aprova-se escolhendo "Apenas visualização" ou "Pode editar", ou recusa-se.
+Os administradores veem uma bolinha com o número de pedidos no menu "Cadastros", no quadro "Quem pode acessar" e no título da aba do navegador, e um aviso ao entrar e a cada novo pedido (o painel confere a cada 1 minuto). No quadro de acessos, no fim da tela **Cadastros**, aprova-se escolhendo "Apenas visualização" ou "Pode editar", ou recusa-se.
 
 **Ordem para publicar:** 1) rode `hydra/03-solicitacoes.sql` inteiro no Studio (SQL Editor, New query); 2) espere uns 5 a 15 minutos; 3) Push origin, Redeploy no Coolify e Ctrl+F5. Se aparecer erro 404/403 em "solicitacoes" depois de 15 minutos, a tabela nova ainda não foi liberada pela API (chamar o TI).
 

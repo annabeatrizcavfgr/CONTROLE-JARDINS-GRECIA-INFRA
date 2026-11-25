@@ -475,6 +475,10 @@ body.so-ver button.chk{cursor:default}
 .cad-tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;font:600 12.5px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;margin-bottom:-1px}
 .cad-tabs button:hover{color:var(--ink)}
 .cad-tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+.qtxt{display:block;min-width:90px;max-width:210px;padding:5px 8px;border:1px solid transparent;border-radius:6px;font-size:13px;line-height:1.3;cursor:text;word-break:break-word;color:var(--ink)}
+.qtxt:hover,.qtxt:focus-visible{border-color:var(--line);background:var(--surface-2);outline:none}
+.qtxt.vazio{color:var(--muted);font-style:italic}
+body.so-ver .qtxt{cursor:default}
 .ac-card{max-width:980px}
 .ac-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:10px}
 .ac-head>div{flex:1 1 380px;max-width:760px}
@@ -1366,7 +1370,9 @@ function stageCell(grupo,x,i){
 }
 function stageCells(grupo,x){return GRUPOS[grupo].labels.map(function(n,i){return stageCell(grupo,x,i)}).join('')}
 /* campo preenchido na própria linha: fica embaixo do check da etapa a que pertence (ou no lugar de uma coluna de informação) */
-function qInput(grupo,q,x){
+function qInput(grupo,q,x,editando){
+  /* responsável pela validação: aparece como texto completo e vira caixa de edição ao clicar (passar o mouse mostra que dá para editar) */
+  if(q[0]==='val'&&grupo==='prj'&&!editando){var tv=String(x.raw.val||'').trim();return '<span class="qfi qtxt'+(tv?'':' vazio')+'" data-qtxt="val" data-id="'+x.id+'" tabindex="0" role="button" title="Clique para editar o responsável pela validação">'+(tv?restricaoEsc(tv):restricaoEsc(q[3]||'responsável'))+'</span>'}
   var r=x.raw,v=q[7]?q[7](r):r[q[0]],falta=q[4]&&q[4](r),verm=q[8]&&q[8](r);
   var dica=q[1]+(falta?' (a etapa já pede esta informação)':'')+(q[0]==='prazo'&&r.prazo&&r.prazo!==prazoSup(r)?' (ajustado; o padrão seria '+fmtDate2(prazoSup(r))+')':'');
   var at=' data-qf="'+q[0]+'" data-id="'+x.id+'" aria-label="'+q[1]+'" title="'+restricaoEsc(dica)+'"';
@@ -1374,6 +1380,20 @@ function qInput(grupo,q,x){
     :'<input type="'+q[2]+'"'+at+(q[0]==='val'?' list="dl-pessoas"':'')+' value="'+restricaoEsc(v==null||(q[2]==='number'&&!v)?'':v)+'" placeholder="'+restricaoEsc(q[3]||'')+'" autocomplete="off"'+(q[2]==='number'?' min="0" step="any"':'')+(q[2]==='date'?' class="dt"':'')+'>';
   return '<span class="qfi'+(falta?' falta':'')+(verm?' verm':'')+'">'+inp+'</span>';
 }
+document.addEventListener('click',function(e){
+  var s=e.target.closest&&e.target.closest('[data-qtxt]');if(!s||!CFG[CURRENT_SCREEN])return;
+  var g=SCREEN_G[CURRENT_SCREEN],x=CFG[CURRENT_SCREEN].itens().filter(function(y){return y.id===s.dataset.id})[0];if(!x)return;
+  var q=(GRUPOS[g].quick||[]).filter(function(z){return z[0]===s.dataset.qtxt})[0];if(!q)return;
+  var tmp=document.createElement('div');tmp.innerHTML=qInput(g,q,x,true);
+  var novo=tmp.firstChild;s.replaceWith(novo);
+  var inp=novo.querySelector('input');if(!inp)return;
+  var orig=inp.value;inp.focus();inp.select();
+  inp.addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();inp.blur()}else if(ev.key==='Escape'){inp.value=orig;inp.blur()}});
+  inp.addEventListener('blur',function(){setTimeout(function(){if(CFG[CURRENT_SCREEN])renderOutras()},0)});
+});
+document.addEventListener('keydown',function(e){
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-qtxt]')){e.preventDefault();e.target.click()}
+});
 function quickAt(grupo,x,i){return (GRUPOS[grupo].quick||[]).filter(function(q){return q[6]===i}).map(function(q){return qInput(grupo,q,x)}).join('')}
 /* ---------- projetos: agrupar por disciplina (opcional), com uma linha-resumo por grupo ----------
    Projetos de mesmo nome (a disciplina, por exemplo "Contenção") viram um grupo quando há 2 ou mais; cada local (código) é uma linha do grupo. */
@@ -1856,7 +1876,7 @@ var CAD_ABERTO={};
 var CAD_DEF=[['obras','Obras / centros de custo','Ex.: JBERO','building','Usadas como campo em pedidos, flows e contratações e como filtro dentro de cada tela. Remover uma obra daqui não apaga os itens que já usam o nome.'],
  ['tipos','Tipos de pedido','Ex.: URGENTE','tag','REGULAR é o padrão e não pode ser removido. EMERGENCIAL e COMPLEMENTO têm cor própria.']];function renderCadastros(){
   save();
-  var admOk=!!(ACESSO&&ACESSO.admin&&window.fgrAuth);   /* o quadro de acessos aparece só para administradora, embaixo das listas */
+  var admOk=!!(ACESSO&&ACESSO.admin&&window.fgrAuth);   /* o quadro de acessos aparece só para administrador, embaixo das listas */
   $('#main').innerHTML='<div class="cad-wrap">'+CAD_DEF.map(function(c){var k=c[0],lista=CAD[k];
     var linhas=lista.length?lista.map(function(n,i){var lock=(k==='tipos'&&n==='REGULAR');
       return '<li class="cad-row"><span class="cad-nome">'+restricaoEsc(n)+'</span>'+(lock?'<span class="m" style="margin:0">padrão</span>':'<button type="button" class="ic" data-cad-del="'+k+'" data-i="'+i+'" title="Remover" aria-label="Remover '+restricaoEsc(n)+'">✕</button>')+'</li>'}).join(''):'<li class="cad-row"><span class="m" style="margin:0">Nada cadastrado.</span></li>';
@@ -2078,13 +2098,13 @@ function bloqueiaVer(e){
   if(e.type==='click'){
     var a=t.closest('[data-act]');
     if(a&&!SEGURO_VER[a.dataset.act])bloqueia=true;
-    if(t.closest('button.chk,[data-etdt],[data-etprev],[data-to],[data-del-restricao],[data-del-ok],[data-cad-add],[data-cad-del],#rnSalvar,.restricao-table td.restricao-ed,td[data-draft-date],td[data-draft-menu]'))bloqueia=true;
+    if(t.closest('button.chk,[data-qtxt],[data-etdt],[data-etprev],[data-to],[data-del-restricao],[data-del-ok],[data-cad-add],[data-cad-del],#rnSalvar,.restricao-table td.restricao-ed,td[data-draft-date],td[data-draft-menu]'))bloqueia=true;
   }else if(t.closest('[data-gr],[data-qf],[data-draft],[data-cad-in],.formc'))bloqueia=true;
   if(bloqueia){e.stopImmediatePropagation();e.preventDefault();toast('Você tem acesso só para visualizar esta obra.');if(e.type!=='click')render()}
 }
 ['click','input','change','paste','keydown'].forEach(function(ev){document.addEventListener(ev,bloqueiaVer,true)});
-/* tela Acessos (só quem é administradora) */
-/* ---------- Acessos (aba de Cadastros, só administradora): membros por obra + pedidos de acesso ---------- */
+/* tela Acessos (só quem é administrador) */
+/* ---------- Acessos (aba de Cadastros, só administrador): membros por obra + pedidos de acesso ---------- */
 var ACESSOS_LISTA=[],ACESSOS_ERRO='',SOLIC=[],SOLIC_VISTAS=-1;
 var AC_BUSCA='',AC_PAG=0,AC_POR=10,AC_FORM=false;
 var NIVEL_ROT={sem:'Sem acesso',ver:'Apenas visualização',editar:'Pode editar'};
@@ -2098,7 +2118,7 @@ function acessosCarrega(){
 function solicCarrega(){
   return syncReq('GET','solicitacoes?select=email,nome,obras,mensagem,created_at&order=created_at.asc').then(function(r){SOLIC=r||[]}).catch(function(){SOLIC=[]});
 }
-/* aviso para a administradora: bolinha no menu, número no título da aba do navegador e um aviso quando chega pedido novo */
+/* aviso para o administrador: bolinha no menu, número no título da aba do navegador e um aviso quando chega pedido novo */
 function solicAvisa(){
   var n=SOLIC.length;
   document.title=(n?'('+n+') ':'')+'Controle Jardins Grécia';
@@ -2138,7 +2158,7 @@ function formMembroHtml(){
   if(!AC_FORM)return '';
   return '<div class="ac-form"><input id="ac-email" type="email" autocomplete="off" placeholder="nome.sobrenome@fgr.com.br" aria-label="E-mail da pessoa"><input id="ac-nome" type="text" autocomplete="off" placeholder="Nome (opcional)" aria-label="Nome da pessoa">'
    +FRENTES.map(function(f){return '<label class="ac-lb">'+restricaoEsc(fNome(f))+'<select id="ac-n-'+f+'">'+['sem','ver','editar'].map(function(k){return '<option value="'+k+'">'+NIVEL_ROT[k]+'</option>'}).join('')+'</select></label>'}).join('')
-   +'<label class="ac-lb">Perfil<select id="ac-adm"><option value="0">Membro</option><option value="1">Administradora (todas as obras)</option></select></label>'
+   +'<label class="ac-lb">Perfil<select id="ac-adm"><option value="0">Membro</option><option value="1">Administrador (todas as obras)</option></select></label>'
    +'<button type="button" class="b" data-ac-add>Convidar</button><button type="button" class="b sec" data-ac-novo>Cancelar</button></div>';
 }
 function desenhaAcessos(){
@@ -2151,10 +2171,10 @@ function desenhaAcessos(){
   var linhas=fatia.length?fatia.map(function(p){
     var e=restricaoEsc(p.email),sou=p.email===eu;
     return '<tr><td><span class="ac-av">'+restricaoEsc(iniciais(p.nomeExib))+'</span><b>'+restricaoEsc(p.nomeExib)+'</b>'+(sou?' <span class="m" style="margin:0">(você)</span>':'')+'</td><td>'+e+'</td>'
-     +FRENTES.map(function(f){return '<td>'+(p.admin?'<span class="m" style="margin:0">Administradora</span>':selNivel(p.email,f,p.obras[f]||'sem'))+'</td>'}).join('')
-     +'<td class="ac-acao"><button type="button" class="b sec sm" data-ac-adm="'+(p.admin?'0':'1')+'" data-e="'+e+'">'+(p.admin?'Tirar administração':'Tornar administradora')+'</button><button type="button" class="ic" data-ac-del data-e="'+e+'" title="Remover todos os acessos" aria-label="Remover '+e+'">✕</button></td></tr>'}).join('')
+     +FRENTES.map(function(f){return '<td>'+(p.admin?'<span class="m" style="margin:0">Administrador</span>':selNivel(p.email,f,p.obras[f]||'sem'))+'</td>'}).join('')
+     +'<td class="ac-acao"><button type="button" class="b sec sm" data-ac-adm="'+(p.admin?'0':'1')+'" data-e="'+e+'">'+(p.admin?'Tirar administração':'Tornar administrador')+'</button><button type="button" class="ic" data-ac-del data-e="'+e+'" title="Remover todos os acessos" aria-label="Remover '+e+'">✕</button></td></tr>'}).join('')
    :'<tr><td colspan="'+(3+FRENTES.length)+'" class="m" style="text-align:center;padding:18px">'+(todos.length?'Ninguém encontrado.':'Ninguém cadastrado.')+'</td></tr>';
-  box.innerHTML='<div class="card ac-card"><div class="ac-head"><div><h2>Membros</h2><div class="m" style="margin:2px 0 0">Quem entra com a conta FGR e não está na lista não vê nenhuma obra. "Apenas visualização" enxerga tudo da obra e não altera nada; "Pode editar" altera. A administradora vê e altera as duas obras e mexe nesta lista.</div></div>'
+  box.innerHTML='<div class="card ac-card"><div class="ac-head"><div><h2>Membros</h2><div class="m" style="margin:2px 0 0">Quem entra com a conta FGR e não está na lista não vê nenhuma obra. "Apenas visualização" enxerga tudo da obra e não altera nada; "Pode editar" altera. O administrador vê e altera as duas obras e mexe nesta lista.</div></div>'
    +'<button type="button" class="b" data-ac-novo>+ Convidar membro</button></div>'
    +(ACESSOS_ERRO?'<div class="m" style="color:var(--bad)">'+restricaoEsc(ACESSOS_ERRO)+'</div>':'')
    +solicHtml()+formMembroHtml()
