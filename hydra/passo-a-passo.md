@@ -151,7 +151,7 @@ O painel tem as obras INFRA e CASAS, cada uma com os próprios dados. Quem pode 
 
 Quem entra com a conta FGR e ainda não tem acesso vê a tela "Sem acesso", escolhe a obra e clica em "Solicitar acesso". Enquanto espera, a tela confere sozinha a cada 1 minuto se já foi aprovada e abre o painel quando for.
 
-As administradoras veem uma bolinha com o número de pedidos no menu "Cadastros", na aba "Acessos" e no título da aba do navegador, e um aviso ao entrar e a cada novo pedido (o painel confere a cada 1 minuto). Na aba **Acessos** (Cadastros) aprova-se escolhendo "Apenas visualização" ou "Pode editar", ou recusa-se.
+As administradoras veem uma bolinha com o número de pedidos no menu "Cadastros", no quadro "Quem pode acessar" e no título da aba do navegador, e um aviso ao entrar e a cada novo pedido (o painel confere a cada 1 minuto). No quadro de acessos, no fim da tela **Cadastros**, aprova-se escolhendo "Apenas visualização" ou "Pode editar", ou recusa-se.
 
 **Ordem para publicar:** 1) rode `hydra/03-solicitacoes.sql` inteiro no Studio (SQL Editor, New query); 2) espere uns 5 a 15 minutos; 3) Push origin, Redeploy no Coolify e Ctrl+F5. Se aparecer erro 404/403 em "solicitacoes" depois de 15 minutos, a tabela nova ainda não foi liberada pela API (chamar o TI).
 

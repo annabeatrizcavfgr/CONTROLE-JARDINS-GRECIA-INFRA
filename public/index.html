@@ -475,7 +475,7 @@ body.so-ver button.chk{cursor:default}
 .cad-tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;font:600 12.5px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;margin-bottom:-1px}
 .cad-tabs button:hover{color:var(--ink)}
 .cad-tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
-.ac-card{max-width:1180px}
+.ac-card{max-width:980px}
 .ac-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:10px}
 .ac-head>div{flex:1 1 380px;max-width:760px}
 .ac-tools{margin:14px 0 8px}
@@ -1856,16 +1856,15 @@ var CAD_ABERTO={};
 var CAD_DEF=[['obras','Obras / centros de custo','Ex.: JBERO','building','Usadas como campo em pedidos, flows e contratações e como filtro dentro de cada tela. Remover uma obra daqui não apaga os itens que já usam o nome.'],
  ['tipos','Tipos de pedido','Ex.: URGENTE','tag','REGULAR é o padrão e não pode ser removido. EMERGENCIAL e COMPLEMENTO têm cor própria.']];function renderCadastros(){
   save();
-  var admOk=!!(ACESSO&&ACESSO.admin&&window.fgrAuth);if(!admOk)CAD_TAB='listas';
-  var abas=admOk?'<div class="cad-tabs" role="tablist"><button type="button" role="tab" data-cadtab="listas" class="'+(CAD_TAB==='listas'?'on':'')+'">Obras e tipos</button><button type="button" role="tab" data-cadtab="acessos" class="'+(CAD_TAB==='acessos'?'on':'')+'">Acessos'+(SOLIC.length?' <span class="bd2">'+SOLIC.length+'</span>':'')+'</button></div>':'';
-  $('#main').innerHTML=abas+(CAD_TAB==='acessos'&&admOk?'<div id="acessos-box"></div>':'<div class="cad-wrap">'+CAD_DEF.map(function(c){var k=c[0],lista=CAD[k];
+  var admOk=!!(ACESSO&&ACESSO.admin&&window.fgrAuth);   /* o quadro de acessos aparece só para administradora, embaixo das listas */
+  $('#main').innerHTML='<div class="cad-wrap">'+CAD_DEF.map(function(c){var k=c[0],lista=CAD[k];
     var linhas=lista.length?lista.map(function(n,i){var lock=(k==='tipos'&&n==='REGULAR');
       return '<li class="cad-row"><span class="cad-nome">'+restricaoEsc(n)+'</span>'+(lock?'<span class="m" style="margin:0">padrão</span>':'<button type="button" class="ic" data-cad-del="'+k+'" data-i="'+i+'" title="Remover" aria-label="Remover '+restricaoEsc(n)+'">✕</button>')+'</li>'}).join(''):'<li class="cad-row"><span class="m" style="margin:0">Nada cadastrado.</span></li>';
     return '<div class="card cad-box"><h2>'+c[1]+'</h2><div class="m">'+c[4]+'</div>'
      +'<details class="cad-dd" data-cad-box="'+k+'"'+(CAD_ABERTO[k]?' open':'')+'><summary><span class="cad-lbl">Itens cadastrados</span><span class="cad-qt">'+lista.length+'</span><span class="cad-chev" aria-hidden="true">▼</span></summary><ul class="cad-list">'+linhas+'</ul></details>'
-     +'<div class="cad-add"><input data-cad-in="'+k+'" placeholder="'+c[2]+'" autocomplete="off" aria-label="Adicionar em '+c[1]+'"><button type="button" data-cad-add="'+k+'">+ Adicionar</button></div></div>'}).join('')+'</div>');
+     +'<div class="cad-add"><input data-cad-in="'+k+'" placeholder="'+c[2]+'" autocomplete="off" aria-label="Adicionar em '+c[1]+'"><button type="button" data-cad-add="'+k+'">+ Adicionar</button></div></div>'}).join('')+'</div>'+(admOk?'<div id="acessos-box" style="margin-top:16px"></div>':'');
   shell();
-  if(CAD_TAB==='acessos'&&admOk){var ab=$('#acessos-box');if(ab)ab.innerHTML='<div class="card ac-card"><h2>Membros</h2><div class="m">Carregando os acessos…</div></div>';Promise.all([acessosCarrega(),solicCarrega()]).then(function(){SOLIC_VISTAS=SOLIC.length;solicAvisa();shell();desenhaAcessos()})}
+  if(admOk){var ab=$('#acessos-box');if(ab)ab.innerHTML='<div class="card ac-card"><h2>Membros</h2><div class="m">Carregando os acessos…</div></div>';Promise.all([acessosCarrega(),solicCarrega()]).then(function(){SOLIC_VISTAS=SOLIC.length;solicAvisa();shell();desenhaAcessos()})}
 }
 document.addEventListener('toggle',function(e){var d=e.target;if(d&&d.dataset&&d.dataset.cadBox)CAD_ABERTO[d.dataset.cadBox]=d.open},true);
 document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('.cad-dd'))return;[].forEach.call(document.querySelectorAll('.cad-dd[open]'),function(d){d.open=false})});function cadAdd(k){
@@ -2087,7 +2086,7 @@ function bloqueiaVer(e){
 /* tela Acessos (só quem é administradora) */
 /* ---------- Acessos (aba de Cadastros, só administradora): membros por obra + pedidos de acesso ---------- */
 var ACESSOS_LISTA=[],ACESSOS_ERRO='',SOLIC=[],SOLIC_VISTAS=-1;
-var AC_BUSCA='',AC_PAG=0,AC_POR=10,AC_FORM=false,CAD_TAB='listas';
+var AC_BUSCA='',AC_PAG=0,AC_POR=10,AC_FORM=false;
 var NIVEL_ROT={sem:'Sem acesso',ver:'Apenas visualização',editar:'Pode editar'};
 function nomeBonito(n){n=String(n||'').trim();if(n&&n===n.toLowerCase())n=n.replace(/(^|\s)(\S)/g,function(m,a,b){return a+b.toUpperCase()});return n}
 function nomeDoEmail(e){return nomeBonito(String(e||'').split('@')[0].replace(/[._]+/g,' '))}
@@ -2103,12 +2102,12 @@ function solicCarrega(){
 function solicAvisa(){
   var n=SOLIC.length;
   document.title=(n?'('+n+') ':'')+'Controle Jardins Grécia';
-  if(SOLIC_VISTAS>=0&&n>SOLIC_VISTAS)toast(n===1?'Chegou 1 pedido de acesso (Cadastros › Acessos).':'Há '+n+' pedidos de acesso aguardando (Cadastros › Acessos).');
-  else if(SOLIC_VISTAS<0&&n)toast(n===1?'Há 1 pedido de acesso aguardando (Cadastros › Acessos).':'Há '+n+' pedidos de acesso aguardando (Cadastros › Acessos).');
+  if(SOLIC_VISTAS>=0&&n>SOLIC_VISTAS)toast(n===1?'Chegou 1 pedido de acesso (veja em Cadastros).':'Há '+n+' pedidos de acesso aguardando (veja em Cadastros).');
+  else if(SOLIC_VISTAS<0&&n)toast(n===1?'Há 1 pedido de acesso aguardando (veja em Cadastros).':'Há '+n+' pedidos de acesso aguardando (veja em Cadastros).');
   SOLIC_VISTAS=n;
 }
 function solicAtualiza(){
-  return solicCarrega().then(function(){solicAvisa();shell();if(CURRENT_SCREEN==='cadastros'&&CAD_TAB==='acessos'&&!syncOcupado())return acessosCarrega().then(desenhaAcessos)});
+  return solicCarrega().then(function(){solicAvisa();shell();if(CURRENT_SCREEN==='cadastros'&&!syncOcupado())return acessosCarrega().then(desenhaAcessos)});
 }
 function agrupaAcessos(){
   var m={},ordem=[];
@@ -2131,7 +2130,7 @@ function solicHtml(){
      var dt=s.created_at?new Date(s.created_at):null,quando=dt&&!isNaN(dt)?dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'';
      var e=restricaoEsc(s.email);
      return '<div class="ac-sol-r"><span class="ac-av">'+restricaoEsc(iniciais(s.nome||nomeDoEmail(s.email)))+'</span>'
-      +'<div class="ac-sol-i"><b>'+restricaoEsc(nomeBonito(s.nome)||nomeDoEmail(s.email))+'</b><div class="m">'+e+' · pediu '+restricaoEsc(pedidas.map(fNome).join(' e '))+(quando?' · '+quando:'')+'</div>'+(s.mensagem?'<div class="m">“'+restricaoEsc(s.mensagem)+'”</div>':'')+'</div>'
+      +'<div class="ac-sol-i"><b>'+restricaoEsc(nomeBonito(s.nome)||nomeDoEmail(s.email))+'</b><div class="m">'+e+' · pediu '+restricaoEsc(pedidas.map(fNome).join(' e '))+(quando?' · '+quando:'')+'</div>'+'</div>'
       +'<select data-sol-nivel="'+e+'" aria-label="Permissão a dar"><option value="ver">Apenas visualização</option><option value="editar">Pode editar</option></select>'
       +'<button type="button" class="b sm" data-sol-ok="'+e+'">Aprovar</button><button type="button" class="b sec sm" data-sol-no="'+e+'">Recusar</button></div>'}).join('')+'</div>';
 }
@@ -2143,7 +2142,7 @@ function formMembroHtml(){
    +'<button type="button" class="b" data-ac-add>Convidar</button><button type="button" class="b sec" data-ac-novo>Cancelar</button></div>';
 }
 function desenhaAcessos(){
-  var box=$('#acessos-box');if(!box||CURRENT_SCREEN!=='cadastros'||CAD_TAB!=='acessos')return;
+  var box=$('#acessos-box');if(!box||CURRENT_SCREEN!=='cadastros')return;
   var eu=String(window.fgrAuth.email()||'').toLowerCase();
   var todos=agrupaAcessos(),q=restricaoNorm(AC_BUSCA.trim());
   var vis=q?todos.filter(function(p){return restricaoNorm(p.nomeExib+' '+p.email).indexOf(q)>=0}):todos;
@@ -2168,9 +2167,8 @@ function acessosGrava(rows){return syncReq('POST','acessos?on_conflict=email,obr
 function acessosApaga(email,obra){return syncReq('DELETE','acessos?email=eq.'+encodeURIComponent(email)+(obra?'&obra=eq.'+encodeURIComponent(obra):''),undefined,{Prefer:'return=minimal'}).then(recarregaAcessos).catch(function(e){toast(erroHttp(e,'Não consegui remover'));return recarregaAcessos()})}
 function solicApaga(email){return syncReq('DELETE','solicitacoes?email=eq.'+encodeURIComponent(email),undefined,{Prefer:'return=minimal'})}
 document.addEventListener('click',function(e){
-  var t=e.target.closest&&e.target.closest('[data-cadtab],[data-ac-novo],[data-ac-add],[data-ac-del],[data-ac-adm],[data-ac-pg],[data-sol-ok],[data-sol-no]');if(!t)return;
+  var t=e.target.closest&&e.target.closest('[data-ac-novo],[data-ac-add],[data-ac-del],[data-ac-adm],[data-ac-pg],[data-sol-ok],[data-sol-no]');if(!t)return;
   var eu=String(window.fgrAuth?window.fgrAuth.email():'').toLowerCase();
-  if(t.hasAttribute('data-cadtab')){CAD_TAB=t.dataset.cadtab;renderCadastros();return}
   if(t.hasAttribute('data-ac-novo')){AC_FORM=!AC_FORM;desenhaAcessos();var f=$('#ac-email');if(f)f.focus();return}
   if(t.hasAttribute('data-ac-pg')){AC_PAG=Math.max(0,AC_PAG+Number(t.dataset.acPg));desenhaAcessos();return}
   if(t.hasAttribute('data-ac-add')){
@@ -2344,7 +2342,7 @@ function semDesenha(editando){
   }else{
     html='<h2>Sem acesso</h2><div class="m">Sua conta ('+restricaoEsc(SEM.meu)+') ainda não tem acesso a nenhuma obra deste painel. Escolha a obra e peça a liberação: quem administra recebe o pedido.</div>'
      +'<div class="fgrid">'+FRENTES.map(function(f){return '<div class="campo"><label><input type="checkbox" data-sem-obra="'+f+'"'+((!s||String(s.obras||'').split(',').indexOf(f)>=0)?' checked':'')+'> '+restricaoEsc(fNome(f))+'</label></div>'}).join('')
-     +'<div class="campo wide"><label for="sem-msg">Para que você precisa do acesso? (opcional)</label><textarea id="sem-msg" rows="2" maxlength="300">'+restricaoEsc(s&&s.mensagem||'')+'</textarea></div></div>'
+     +'</div>'
      +'<div class="acoes"><button type="button" class="b" data-sem-pedir>Solicitar acesso</button>'+(s?'<button type="button" class="b sec" data-sem-voltar>Cancelar</button>':'')+'</div>';
   }
   SEM.box.innerHTML='<div class="cad-wrap"><div class="card cad-box">'+html+'</div></div>';
@@ -2361,7 +2359,7 @@ document.addEventListener('click',function(e){
   if(t.hasAttribute('data-sem-voltar')){semDesenha(false);return}
   var obras=[].map.call(document.querySelectorAll('input[data-sem-obra]:checked'),function(c){return c.dataset.semObra});
   if(!obras.length){toast('Marque pelo menos uma obra.');return}
-  var m=document.getElementById('sem-msg'),corpo={email:SEM.meu,nome:(window.fgrNomeAtual&&window.fgrNomeAtual())||nomeDoEmail(SEM.meu),obras:obras.join(','),mensagem:(m&&m.value.trim())||null,created_at:new Date().toISOString()};
+  var corpo={email:SEM.meu,nome:(window.fgrNomeAtual&&window.fgrNomeAtual())||nomeDoEmail(SEM.meu),obras:obras.join(','),mensagem:null,created_at:new Date().toISOString()};
   syncReq('POST','solicitacoes?on_conflict=email',[corpo],{Prefer:'resolution=merge-duplicates,return=minimal'}).then(function(){SEM.sol=corpo;semDesenha(false);toast('Pedido enviado.')}).catch(function(er){toast(erroHttp(er,'Não consegui enviar o pedido'))});
 });
 window.fgrSyncStart=function(){
