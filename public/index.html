@@ -1381,10 +1381,10 @@ function linhasTabela(grupo,items,ordem,td){
     if(!mapa[ch]){mapa[ch]={chave:ch,nome:String(x.raw.proj||'').trim()||'(sem nome)',itens:[]};gr.push(mapa[ch])}
     mapa[ch].itens.push(x);
   });
-  var fe=UI.projetos.grpFechado||{};
+  var ab=UI.projetos.grpAberto||{},buscando=!!UI.projetos.busca.trim();   /* grupos começam recolhidos; ao buscar, abrem para mostrar o que foi achado */
   return gr.map(function(g){
     if(g.itens.length<2)return linhaItem(g.itens[0],ordem,td,false);
-    var fechado=!!fe[g.chave];
+    var fechado=!ab[g.chave]&&!buscando;
     return grupoResumoHtml(g,ordem,fechado)+(fechado?'':g.itens.map(function(x){
       var p=x.raw,y=Object.assign({},x,{cols:x.cols.slice()});
       var loc=String(p.tip||'').trim(),rv=String(p.rev||'').trim();   /* projetos não têm código: o local (tipologia / área) vira o título da linha */
@@ -1440,7 +1440,7 @@ var CFG={
   vazio:function(){return {serv:'',obra:obraPad(),sol:'',tipo:'Contratação',emerg:'Não',necessidade:'',abertura:'',prazo:'',idglpi:'',pedserv:'',etapa:-1,criada:hojeISO(),v:2}},obrig:['serv','necessidade'],prefixo:'l'}
 };
 var UI={};['pedidos','flows','licglpi','projetos','medicoes'].forEach(function(k){UI[k]={seg:CFG[k].seg[0][0],busca:'',aberto:false,f:{},aberta:null,form:null,del:null}});
-UI.projetos.agrupar=!!lsGet('fgr_prj_agrupar',false);UI.projetos.grpFechado={};
+UI.projetos.agrupar=!!lsGet('fgr_prj_agrupar2',true);UI.projetos.grpAberto={};   /* padrão: agrupado por disciplina, com todos os grupos recolhidos */
 /* filtro por coluna (clicar no título da coluna): lista de valores com caixas de seleção */
 var SCREEN_G={pedidos:'ped',flows:'flo',licglpi:'lic',projetos:'prj',medicoes:'med'};
 function cfRot(G,i,v){return v===''?'(vazio)':(G.fdate&&G.fdate[i])?fmtDate2(v):v}
@@ -1705,8 +1705,8 @@ document.addEventListener('click',function(e){
   else if(act==='grade-linha')GRADE_ST[k].push(gradeVazia(k,1)[0]);
   else if(act==='grade-limpar')GRADE_ST[k]=gradeVazia(k,5);
   else if(act==='grade-salvar'){if(!gradeSalva(u,k)){renderOutras();return}}
-  else if(act==='agrupar'){u.agrupar=!u.agrupar;lsSet('fgr_prj_agrupar',u.agrupar)}
-  else if(act==='grupo'){u.grpFechado=u.grpFechado||{};u.grpFechado[v]=!u.grpFechado[v]}
+  else if(act==='agrupar'){u.agrupar=!u.agrupar;lsSet('fgr_prj_agrupar2',u.agrupar)}
+  else if(act==='grupo'){u.grpAberto=u.grpAberto||{};u.grpAberto[v]=!u.grpAberto[v]}
   else if(act==='pz')u.pz=!u.pz;
   else if(act==='salvar-prazos-flow'){['orc','obra','plan','proj','sup'].forEach(function(k){var el=document.getElementById('pzf-'+k);if(el)PRAZOS_FLOW[k]=Math.max(0,Number(el.value)||0)});u.pz=false;toast('Prazos padrão salvos.')}
   else if(act==='salvar-prazos-sup'){TIPOS_CONTR.forEach(function(t,i){[0,1].forEach(function(j){var el=document.getElementById('pzs-'+i+'-'+j);if(el)PRAZOS_SUP[t][j]=Math.max(0,Number(el.value)||0)})});u.pz=false;toast('Prazos padrão salvos.')}
